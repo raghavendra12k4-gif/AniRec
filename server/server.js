@@ -4,6 +4,11 @@ const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
 
+const app = express();
+// [CHANGED] Same open CORS policy as before, but we now also expose the custom "X-Match-Level"
+// response header so the browser (which loads the page from a different origin than this API)
+// is allowed to read it from fetch() responses. See /api/anime for what the header means.
+// [CHANGED] Also expose "X-Profile-Strength" (none / weak / good) = how much the recommender knows about the user.
 app.use(cors({
     origin: [
         "http://127.0.0.1:5500",
@@ -11,13 +16,8 @@ app.use(cors({
         "https://raghavendra12k4-gif.github.io"
     ]
 }));
-
-const app = express();
-// [CHANGED] Same open CORS policy as before, but we now also expose the custom "X-Match-Level"
-// response header so the browser (which loads the page from a different origin than this API)
-// is allowed to read it from fetch() responses. See /api/anime for what the header means.
-// [CHANGED] Also expose "X-Profile-Strength" (none / weak / good) = how much the recommender knows about the user.
 app.use(cors({ exposedHeaders: ["X-Match-Level", "X-Profile-Strength"] }));
+
 
 const PORT = process.env.PORT || 5000;
 
