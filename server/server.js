@@ -11,7 +11,7 @@ const app = express();
 // [CHANGED] Also expose "X-Profile-Strength" (none / weak / good) = how much the recommender knows about the user.
 app.use(cors({ exposedHeaders: ["X-Match-Level", "X-Profile-Strength"] }));
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 /* =========================================================
    SMALL IN-MEMORY CACHE & RATE LIMIT HANDLING
@@ -2231,6 +2231,6 @@ app.get("/api/trending", async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT,"0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
