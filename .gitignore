@@ -1,0 +1,19 @@
+
+# Dependencies
+node_modules/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Generated cache
+server/anime-cache.json
+
+# OS files
+.DS_Store
+Thumbs.db
