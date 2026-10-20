@@ -1,3 +1,10 @@
+const API_BASE_URL =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+        ? "http://localhost:5000"
+        : "https://anirec-api.onrender.com";
+
+
 /* Map human-readable moods to query parameters */
 const MOOD_MAP = {
   relaxing: { genres: ["Slice of Life"], tags: ["Iyashikei", "Relaxing"] },
@@ -297,7 +304,7 @@ function hideHomeSearchSuggest() {
 async function showHomeSearchSuggestions(query) {
     const token = ++homeSearchSuggestToken;
     try {
-        const list = await fetchJson(`http://localhost:5000/api/search?q=${encodeURIComponent(query)}`);
+        const list = await fetchJson(`${API_BASE_URL}/api/search?q=${encodeURIComponent(query)}`);
         if (token !== homeSearchSuggestToken || !homeSearchSuggest) return;
 
         homeSearchSuggest.innerHTML = "";
@@ -495,7 +502,7 @@ async function fetchRecommendations(options = {}) {
     writeFiltersToHash(prefs);
 
     try {
-        const response = await fetch(`http://localhost:5000/api/anime?${params.toString()}`);
+        const response = await fetch(`${API_BASE_URL}/api/anime?${params.toString()}`);
         const payload = await response.json();
 
         if (requestId !== recommendationRequestId) return; // a newer search replaced this one
@@ -671,7 +678,7 @@ async function openAnimeModal(animeId) {
     modalBody.innerHTML = `<p class="loading-msg">Loading details...</p>`;
 
     try {
-        const res = await fetch(`http://localhost:5000/api/anime/${encodeURIComponent(animeId)}`);
+        const res = await fetch(`${API_BASE_URL}/api/anime/${encodeURIComponent(animeId)}`);
         const anime = await res.json();
 
         // Inside openAnimeModal(animeId), right after fetching `anime`:
@@ -699,7 +706,7 @@ async function openAnimeModal(animeId) {
 
         // Construct backend watch URL
         // [CHANGED] Uses rawTitle, and the unused anilistId parameter (the server ignored it) was removed
-        const watchUrl = `http://localhost:5000/api/watch?title=${encodeURIComponent(rawTitle)}`;
+        const watchUrl = `${API_BASE_URL}/api/watch?title=${encodeURIComponent(rawTitle)}`;
 
         // [ADDED] Official streaming platforms from AniList (Crunchyroll, Netflix, ...), one button per site.
         // Only http(s) links are accepted. The Miruro search button below stays as an extra option.
@@ -943,7 +950,7 @@ async function loadUserProfile(username) {
     try {
         const encodedUsername = encodeURIComponent(username);
         // [CHANGED] Now actually uses the encoded username (it was created before but never used)
-        const response = await fetch(`http://localhost:5000/api/user/${encodedUsername}`);
+        const response = await fetch(`${API_BASE_URL}/api/user/${encodedUsername}`);
         if (!response.ok) {
             // [CHANGED] Inline message instead of alert("User not found on AniList!")
             const errorBody = await response.json().catch(() => ({}));
@@ -1176,7 +1183,7 @@ async function loadUserWatchlist(username) {
 
     try {
         const encodedUsername = encodeURIComponent(username);
-        const response = await fetch(`http://localhost:5000/api/watchlist/${encodedUsername}`);
+        const response = await fetch(`${API_BASE_URL}/api/watchlist/${encodedUsername}`);
         if (!response.ok) {
             if (container) container.innerHTML = `<p class="watchlist-empty">Could not load watchlist.</p>`;
             cachedWatchlist = [];
@@ -1320,7 +1327,7 @@ function renderContinueWatching() {
         const pct = total ? Math.min(100, Math.round((progress / total) * 100)) : 0;
         const nextEp = total && progress >= total ? null : progress + 1;
         const cover = escapeHtml(media.coverImage?.large || media.coverImage?.medium || ""); // [CHANGED] escaped
-        const watchUrl = `http://localhost:5000/api/watch?title=${encodeURIComponent(title)}`;
+        const watchUrl = `${API_BASE_URL}/api/watch?title=${encodeURIComponent(title)}`;
 
         const card = document.createElement("div");
         card.className = "anime-card";
@@ -1463,7 +1470,7 @@ async function loadTrendingRow(username) {
         const params = new URLSearchParams();
         if (username) params.append("username", username);
 
-        const res = await fetch(`http://localhost:5000/api/trending?${params.toString()}`);
+        const res = await fetch(`${API_BASE_URL}/api/trending?${params.toString()}`);
         if (!res.ok) throw new Error("Trending request failed");
 
         const list = await res.json();
@@ -1517,7 +1524,7 @@ async function loadPersonalRows(username) {
     // Both requests run at the same time; one failing doesn't affect the other
     const [tasteResult, becauseResult] = await Promise.allSettled([
         fetchTasteRow(username),
-        fetchJson(`http://localhost:5000/api/because/${encoded}${becauseSuffix}`)
+        fetchJson(`${API_BASE_URL}/api/because/${encoded}${becauseSuffix}`)
     ]);
 
     if (token !== discoverToken) return;
@@ -1789,7 +1796,7 @@ async function loadAffinityInsights(username) {
     try {
         const liked = getLikedIds();
         const data = await fetchJson(
-            `http://localhost:5000/api/affinity/${encodeURIComponent(username)}${liked.length > 0 ? `?liked=${liked.join(",")}` : ""}`
+            `${API_BASE_URL}/api/affinity/${encodeURIComponent(username)}${liked.length > 0 ? `?liked=${liked.join(",")}` : ""}`
         );
         if (getStoredUsername() !== username) return; // the user disconnected / switched while this was loading
         renderAffinityInsights(box, data);
@@ -1854,7 +1861,7 @@ async function runSeedSearch(query) {
     seedSearchResults.innerHTML = `<p class="affinity-note">Searching...</p>`;
 
     try {
-        const list = await fetchJson(`http://localhost:5000/api/search?q=${encodeURIComponent(query)}`);
+        const list = await fetchJson(`${API_BASE_URL}/api/search?q=${encodeURIComponent(query)}`);
         if (token !== seedSearchToken) return;
 
         seedSearchResults.innerHTML = "";
@@ -1987,7 +1994,7 @@ function fetchTasteRow(username) {
     if (skipped.length > 0) params.set("exclude", skipped.join(","));
     if (seen.length > 0) params.set("seen", seen.join(","));
     const qs = params.toString();
-    return fetchJson(`http://localhost:5000/api/recommendations/${encodeURIComponent(username)}${qs ? `?${qs}` : ""}`);
+    return fetchJson(`${API_BASE_URL}/api/recommendations/${encodeURIComponent(username)}${qs ? `?${qs}` : ""}`);
 }
 
 const tasteShuffleBtn = document.getElementById("tasteShuffleBtn");
@@ -2026,7 +2033,7 @@ function hideBecauseSuggest() {
 async function showBecauseSuggestions(q) {
     const myToken = ++becauseSuggestToken;
     try {
-        const list = await fetchJson(`http://localhost:5000/api/search?q=${encodeURIComponent(q)}`);
+        const list = await fetchJson(`${API_BASE_URL}/api/search?q=${encodeURIComponent(q)}`);
         if (myToken !== becauseSuggestToken) return;
 
         becauseSuggest.innerHTML = "";
@@ -2076,7 +2083,7 @@ async function loadBecauseShow(id, title, options = {}) {
         if (skipped.length > 0) params.set("exclude", skipped.join(","));
         if (becauseCurrent.seen.length > 0) params.set("seen", becauseCurrent.seen.join(","));
 
-        const data = await fetchJson(`http://localhost:5000/api/because-show/${encodeURIComponent(id)}?${params.toString()}`);
+        const data = await fetchJson(`${API_BASE_URL}/api/because-show/${encodeURIComponent(id)}?${params.toString()}`);
         if (myToken !== becauseShowToken) return;
 
         becauseCurrent.title = data.seed.title;
@@ -2179,8 +2186,8 @@ async function rollSurprise(mode) {
         if (skipped.length > 0) params.set("exclude", skipped.join(","));
         if (liked.length > 0) params.set("liked", liked.join(","));
 
-        const pick = await fetchJson(`http://localhost:5000/api/surprise?${params.toString()}`);
-        const anime = await fetchJson(`http://localhost:5000/api/anime/${encodeURIComponent(pick.id)}`);
+        const pick = await fetchJson(`${API_BASE_URL}/api/surprise?${params.toString()}`);
+        const anime = await fetchJson(`${API_BASE_URL}/api/anime/${encodeURIComponent(pick.id)}`);
         if (myToken !== surpriseToken) return;
 
         showSurpriseAnime(anime, pick.studio?.name || anime.studios?.nodes?.[0]?.name || "", mode, true);
@@ -2340,7 +2347,7 @@ function getListCount(key) {
 async function getListCards(ids) {
     const missing = ids.filter(id => !listCardCache.has(id));
     for (let i = 0; i < missing.length; i += 50) {
-        const cards = await fetchJson(`http://localhost:5000/api/anime-cards?ids=${missing.slice(i, i + 50).join(",")}`);
+        const cards = await fetchJson(`${API_BASE_URL}/api/anime-cards?ids=${missing.slice(i, i + 50).join(",")}`);
         cards.forEach(card => listCardCache.set(card.id, card));
     }
     return ids.map(id => listCardCache.get(id)).filter(Boolean);

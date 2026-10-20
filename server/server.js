@@ -4,6 +4,14 @@ const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
 
+app.use(cors({
+    origin: [
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "https://raghavendra12k4-gif.github.io"
+    ]
+}));
+
 const app = express();
 // [CHANGED] Same open CORS policy as before, but we now also expose the custom "X-Match-Level"
 // response header so the browser (which loads the page from a different origin than this API)
