@@ -2536,3 +2536,207 @@ main {
     .list-filter-input { width: 100%; }
     .lists-panel-tools { width: 100%; }
 }
+
+
+/* =========================================================
+   [ADDED] MOBILE & TOUCH LAYER
+   Everything below only applies on phones / tablets / touch screens
+   (it sits inside media queries), so the desktop layout is untouched.
+   It is deliberately the LAST block in this file so it wins over the
+   earlier rules that have the same specificity.
+========================================================= */
+
+/* ---- Touch polish (no visible change on desktop) ---- */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+a, button, label, .anime-card, .list-tab, .tab-btn {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
+    touch-action: manipulation;   /* no double-tap-zoom delay on buttons */
+}
+
+/* ---- Touch screens: hover lifts would "stick" after a tap, so switch them off ---- */
+@media (hover: none) {
+    .anime-card:hover,
+    .related-card:hover,
+    .surprise-mode:hover,
+    .results-action-btn:hover,
+    .continue-cta:hover,
+    .generate-btn:hover,
+    .reset-btn:hover,
+    .stage-btn:hover,
+    .modal-watch-btn:hover,
+    .anime-info .watch-btn:hover,
+    .anime-info .continue-watch:hover,
+    .surprise-action-btn:hover,
+    .history-thumb:hover img {
+        transform: none;
+    }
+
+    .anime-card:hover img { transform: none; }
+}
+
+/* ---- Phones & small tablets ---- */
+@media (max-width: 760px) {
+
+    /* Safety net: nothing may push the page sideways. "clip" (unlike "hidden") keeps the sticky top bar working. */
+    body { overflow-x: clip; }
+
+    /* ----- Top bar ----- */
+    .topbar-inner { height: 58px; }
+    .logo img { height: 30px; max-width: 150px; }
+
+    /* ----- Bottom tab bar (the sidebar) ----- */
+    .nav-links .logo-icon { display: none; }          /* it was floating on top of the tabs */
+    .sidebar { padding: 0 6px; background: rgba(16, 18, 20, 0.98); }
+    .nav-links li { flex: 1 1 0; min-width: 0; }      /* 5 tabs share the width, so 320px phones fit too */
+    .nav-links li.nav-search-item { margin: 0; }
+    .nav-links a { width: 100%; max-width: 78px; }
+
+    /* ----- Page ----- */
+    main { padding-bottom: 104px; }                   /* room above the tab bar */
+    .page-head { margin-bottom: 18px; }
+    .page-head h1 { font-size: 1.7rem; }
+    .result-sec h2,
+    .continue-sec h2,
+    .row-header h2,
+    .lists-panel-head h2 { font-size: 1.2rem; }
+    .result-sec,
+    .continue-sec,
+    .discover-row { margin-bottom: 30px; }
+
+    /* Confirmation toast must sit ABOVE the tab bar, not behind it */
+    .toast {
+        bottom: 82px;
+        width: max-content;
+        max-width: calc(100vw - 32px);
+        text-align: center;
+    }
+
+    /* ----- Typing: 16px inputs stop iPhones zooming the page when a field is focused ----- */
+    .search-field input,
+    .connect-input-group input,
+    .seed-input,
+    .list-filter-input,
+    .filter-username input { font-size: 16px; }
+
+    .connect-input-group input { min-width: 0; }
+
+    /* ----- Home filters: two per row, dropdowns that stay on screen ----- */
+    .filter-sec { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin: 14px 0 26px; }
+    .filter-btn { padding: 10px 12px; }
+
+    .filter-menu {
+        width: max-content;
+        min-width: 100%;
+        max-width: calc(100vw - 36px);
+        max-height: min(280px, 45vh);
+        overscroll-behavior: contain;
+    }
+    /* filters 3, 5 and 7 (Genre, Year, Language) sit in the right column: open their menus towards the left */
+    .filter-sec > .filter:nth-child(odd) .filter-menu { left: auto; right: 0; }
+    .filter-menu label { padding: 12px 10px; }        /* bigger touch targets */
+
+    .filter-actions { grid-column: 1 / -1; gap: 10px; }
+    .action-btn-item { flex: 1; }
+    .generate-btn, .reset-btn { width: 100%; }
+
+    /* ----- Cards: two per row ----- */
+    .anime-results { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+    .anime-card img { height: 210px; }
+    .skeleton-img { height: 210px; }
+    .skeleton-info { padding: 12px; }
+    .anime-info { padding: 12px; }
+    .anime-info h3 { font-size: 15px; margin-bottom: 6px; }
+    .anime-info .score { font-size: 13px; }
+    .anime-info .genres { font-size: 12px; overflow-wrap: anywhere; }
+    .anime-info .reason-text { font-size: 11px; }
+    .card-remove-btn { width: 34px; height: 34px; font-size: 15px; }
+
+    .results-note { margin: 0 0 14px; }
+    .results-actions { gap: 10px; }
+    .results-action-btn { flex: 1 1 140px; }
+
+    /* ----- Horizontal rows (Discover) ----- */
+    .row-scroller { gap: 12px; }
+    .row-header-split { flex-wrap: wrap; align-items: flex-end; }
+    .row-header-split > div { min-width: 0; flex: 1 1 200px; }
+    .because-search { padding: 14px; border-radius: 14px; }
+    .because-suggest { max-height: 260px; }
+    .because-heading-row { flex-wrap: wrap; }
+
+    /* ----- Details pop-up ----- */
+    .modal-content {
+        width: 94%;
+        max-height: 88vh;
+        max-height: 88dvh;      /* follows the mobile browser's collapsing address bar */
+        padding: 18px 16px;
+        border-radius: 14px;
+        overscroll-behavior: contain;   /* scrolling the pop-up never scrolls the page behind it */
+    }
+    .close-btn { width: 40px; height: 40px; }
+    .banner-img { height: 110px; margin-bottom: 14px; }
+    .modal-details-grid { gap: 16px; justify-content: center; }
+    .modal-details-grid::before {
+        left: 50%;
+        transform: translateX(-50%);
+        width: 150px;
+        height: 215px;
+    }
+    .modal-poster { width: 140px; height: 205px; }
+    .modal-info { flex: 1 1 100%; min-width: 0; }   /* was min-width: 260px, which overflowed small phones */
+    .modal-info h2 { font-size: 20px; }
+    .meta-badges { flex-wrap: wrap; }
+    .related-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+    .modal-action-row > * { flex: 1 1 140px; }
+
+    /* ----- Profile pop-up ----- */
+    .genre-name { width: 76px; }
+    .watchlist-content { max-height: 260px; }
+
+    /* ----- Surprise page ----- */
+    .surprise-modes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 16px 0 20px; }
+    .surprise-mode { padding: 14px; border-radius: 14px; }
+    .mode-icon { width: 40px; height: 40px; font-size: 20px; }
+    .mode-name { font-size: 1rem; }
+    .mode-desc { font-size: 0.8rem; }
+
+    .stage-empty, .stage-loading { min-height: 220px; }
+    .stage-card { min-height: 0; border-radius: 18px; }
+    .stage-body { padding: 18px; gap: 16px; }
+    .stage-poster { margin: 0 auto; }
+    .stage-info h2 { font-size: 1.4rem; }
+    .stage-actions { width: 100%; }
+    .stage-btn { flex: 1 1 calc(50% - 5px); padding: 12px 10px; }
+    .history-thumb { flex-basis: 96px; }
+
+    /* ----- Lists page ----- */
+    .lists-layout { gap: 14px; margin-top: 16px; }
+    .lists-rail { border-radius: 14px; }
+    .list-filter-input { flex: 1; min-width: 0; }
+    .list-item { padding: 10px; gap: 10px; }
+    .list-item-main { gap: 12px; }
+    .list-action-btn { padding: 8px 10px; font-size: 12px; }
+}
+
+/* ---- Very small phones (iPhone SE, old Androids) ---- */
+@media (max-width: 360px) {
+    :root { --page-pad: 14px; }
+    .page-head h1 { font-size: 1.5rem; }
+    .nav-links a { font-size: 10px; }
+    .anime-card img, .skeleton-img { height: 190px; }
+    .modal-poster { width: 120px; height: 176px; }
+}
+
+/* ---- Phones held sideways: the left sidebar is taller than the screen, so tighten it ---- */
+@media (min-width: 761px) and (max-height: 520px) and (pointer: coarse) {
+    .sidebar { padding-top: 12px; overflow-y: auto; }
+    .sidebar::-webkit-scrollbar { width: 0; }
+    .nav-links .logo-icon { display: none; }
+    .nav-links ul { gap: 4px; }
+    .nav-links a { padding: 7px 0; }
+    .nav-links li.nav-search-item { margin-bottom: 8px; }
+    .modal-content { max-height: 92vh; max-height: 92dvh; }
+}

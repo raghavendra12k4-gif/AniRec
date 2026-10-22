@@ -1,8 +1,16 @@
-const API_BASE_URL =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1"
-        ? "http://localhost:5000"
-        : "https://anirec-api.onrender.com";
+// [CHANGED] Same behaviour as before for localhost and the hosted site. New: when the page is opened from a phone
+// on the same Wi-Fi through the laptop's address (e.g. http://192.168.1.20:5500), the API is on that SAME machine
+// (port 5000) - before, only "localhost" counted as local, so the phone fell through to the hosted server.
+const API_BASE_URL = (() => {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") return "http://localhost:5000";
+
+    const isHomeNetwork =
+        /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) || host.endsWith(".local");
+    if (isHomeNetwork) return `http://${host}:5000`;
+
+    return "https://anirec-api.onrender.com";
+})();
 
 
 /* Map human-readable moods to query parameters */
