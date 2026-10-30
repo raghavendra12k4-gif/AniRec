@@ -99,6 +99,11 @@ function saveAnime(anime) {
         title: { english: anime.title?.english || null, romaji: anime.title?.romaji || null },
         averageScore: anime.averageScore ?? null,
         genres: (anime.genres || []).slice(0, 3),
+        // [ADDED] status / format / episodes / year, so a saved show can still show its status and meta line
+        status: anime.status ?? null,
+        format: anime.format ?? null,
+        episodes: anime.episodes ?? null,
+        seasonYear: anime.seasonYear ?? anime.startDate?.year ?? null,
         // [CHANGED] also keep the poster colour so saved cards get the same coloured glow as every other card
         coverImage: { extraLarge: anime.coverImage?.extraLarge || anime.coverImage?.large || "", color: anime.coverImage?.color || null }
     });
@@ -155,6 +160,178 @@ function showToast(message) {
 
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+/* =========================================================
+   [ADDED] ANIME CARD: one shared look for every card on the site
+   Poster with a STATUS badge (Airing / Finished / Upcoming ...) and a score badge, then the title,
+   "year • format • episodes", up to 3 genre chips, a short synopsis and the action row
+   (Watch Trailer, "+" Save for later, heart = Favourite).
+========================================================= */
+
+// AniList "status" values -> label + colour class (the colour lives in style.css as .status-<cls>)
+const CARD_STATUS = {
+    RELEASING:        { label: "Airing",    cls: "airing" },
+    FINISHED:         { label: "Finished",  cls: "finished" },
+    NOT_YET_RELEASED: { label: "Upcoming",  cls: "upcoming" },
+    CANCELLED:        { label: "Cancelled", cls: "cancelled" },
+    HIATUS:           { label: "On Hiatus", cls: "hiatus" }
+};
+
+const CARD_FORMAT = { TV: "TV", TV_SHORT: "TV Short", MOVIE: "Movie", SPECIAL: "Special", OVA: "OVA", ONA: "ONA", MUSIC: "Music" };
+const CARD_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const CARD_ICONS = {
+    play: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8 5.5v13l11-6.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+    plus: '<svg class="icon-plus" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    check: '<svg class="icon-check" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    heart: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 21s-7-4.35-9.5-9.2C.9 8.6 2.9 5 6.3 5c2 0 3.6 1 5.7 3.3C14.1 6 15.7 5 17.7 5c3.4 0 5.4 3.6 3.8 6.8C19 16.65 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
+};
+
+// [ADDED] Remembers the recommender's "why" line for each show that was shown on a card with one,
+// so the details window's "Why this anime?" tab can reuse it.
+const modalReasonHints = new Map();
+
+// The badge shown at the top-left of the poster: the show's current status.
+// Airing shows also say how many episodes are out; upcoming shows say when they start (when AniList knows).
+function getCardStatusBadge(anime) {
+    const info = CARD_STATUS[anime.status];
+    if (!info) return { label: "Status unknown", cls: "unknown" };
+
+    let label = info.label;
+    if (anime.status === "RELEASING") {
+        const nextEp = anime.nextAiringEpisode?.episode;
+        if (Number.isInteger(nextEp) && nextEp > 1) label += ` · Ep ${nextEp - 1}`;
+    } else if (anime.status === "NOT_YET_RELEASED") {
+        const start = anime.startDate;
+        if (start?.year) label += ` · ${start.month ? CARD_MONTHS[start.month - 1] + " " : ""}${start.year}`;
+    }
+    return { label, cls: info.cls };
+}
+
+// "2013 • TV • 25 eps"
+function getCardMeta(anime) {
+    const parts = [];
+    const year = anime.seasonYear || anime.startDate?.year;
+    if (year) parts.push(year);
+    if (anime.format) parts.push(CARD_FORMAT[anime.format] || String(anime.format).replace(/_/g, " "));
+    if (anime.format !== "MOVIE") {
+        if (anime.episodes) parts.push(`${anime.episodes} ${anime.episodes === 1 ? "ep" : "eps"}`);
+        else if (anime.status === "RELEASING") parts.push("Ongoing");
+    }
+    return parts.join(" • ");
+}
+
+// Plain-text synopsis (AniList can still send <br> and <i> tags). The CSS cuts it to 3 lines.
+function getCardSynopsis(anime) {
+    const plain = String(anime.description || "")
+        .replace(/<br\s*\/?>/gi, " ")
+        .replace(/<[^>]*>/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    if (!plain) return "No synopsis available yet.";
+    return escapeHtml(plain.length > 320 ? plain.slice(0, 320).trimEnd() + "…" : plain);
+}
+
+function hasRealTrailer(anime) {
+    return Boolean(anime.trailer?.id) && (anime.trailer.site === "youtube" || anime.trailer.site === "dailymotion");
+}
+
+// Direct trailer link when AniList has one, otherwise a YouTube search for it
+function getTrailerUrl(anime, title) {
+    if (hasRealTrailer(anime)) {
+        const id = encodeURIComponent(anime.trailer.id);
+        return anime.trailer.site === "youtube"
+            ? `https://www.youtube.com/watch?v=${id}`
+            : `https://www.dailymotion.com/video/${id}`;
+    }
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} anime trailer`)}`;
+}
+
+function cardPosterHTML(anime, title) {
+    const cover = escapeHtml(anime.coverImage?.extraLarge || anime.coverImage?.large || anime.coverImage?.medium || "");
+    const status = getCardStatusBadge(anime);
+    const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : "N/A";
+    return `
+        <div class="card-poster">
+            <img src="${cover}" alt="${escapeHtml(title)}" loading="lazy" />
+            <span class="status-badge status-${status.cls}"><span class="status-dot" aria-hidden="true"></span><span class="status-text">${escapeHtml(status.label)}</span></span>
+            <span class="score-badge" title="AniList average score"><span class="score-star" aria-hidden="true">★</span>${score}</span>
+        </div>`;
+}
+
+function cardGenresHTML(anime) {
+    const chips = (anime.genres || []).slice(0, 3)
+        .map(genre => `<span class="genre-chip">${escapeHtml(genre)}</span>`)
+        .join("");
+    return chips ? `<div class="card-genres">${chips}</div>` : "";
+}
+
+// Skeleton shown while cards load (same proportions as a real card)
+function skeletonCardHTML() {
+    return `
+        <div class="skeleton-card">
+            <div class="skeleton-img"></div>
+            <div class="skeleton-info">
+                <div class="skeleton-text skeleton-title"></div>
+                <div class="skeleton-text skeleton-meta"></div>
+                <div class="skeleton-text skeleton-chips"></div>
+                <div class="skeleton-text skeleton-synopsis"></div>
+                <div class="skeleton-text skeleton-synopsis short"></div>
+            </div>
+        </div>`;
+}
+
+// Keeps the "+" (saved) and heart (favourite) buttons of every card on the page in sync with the stored lists
+function refreshCardButtons() {
+    const saved = new Set(getSavedList().map(item => item.id));
+    const favourites = new Set(getSeedPicks().map(pick => pick.id));
+
+    document.querySelectorAll(".anime-card[data-anime-id]").forEach(card => {
+        const id = Number(card.dataset.animeId);
+
+        const saveBtn = card.querySelector(".card-save-btn");
+        if (saveBtn) {
+            const on = saved.has(id);
+            saveBtn.classList.toggle("is-active", on);
+            saveBtn.setAttribute("aria-pressed", String(on));
+            saveBtn.setAttribute("aria-label", on ? "Remove from saved" : "Save for later");
+            saveBtn.title = on ? "Saved for later (click to remove)" : "Save for later";
+        }
+
+        const favBtn = card.querySelector(".card-fav-btn");
+        if (favBtn) {
+            const on = favourites.has(id);
+            favBtn.classList.toggle("is-active", on);
+            favBtn.setAttribute("aria-pressed", String(on));
+            favBtn.setAttribute("aria-label", on ? "Remove from favourites" : "Add to favourites");
+            favBtn.title = on ? "In your favourites (click to remove)" : "Add to favourites";
+        }
+    });
+}
+
+function handleCardAction(action, anime, title) {
+    if (action === "save") {
+        if (isSaved(anime.id)) {
+            removeSaved(anime.id);
+            showToast("Removed from saved");
+        } else {
+            saveAnime(anime);
+            showToast("Saved for later");
+        }
+        renderSavedRow();
+    } else if (action === "favourite") {
+        const isFavourite = getSeedPicks().some(pick => pick.id === Number(anime.id));
+        if (isFavourite) {
+            removeSeedPick(anime.id);
+            showToast("Removed from favourites");
+        } else {
+            addSeedPick({ id: anime.id, title });
+            showToast("Added to your favourites");
+        }
+        onSeedsChanged(); // refreshes the favourites list + the taste profile (and the card buttons)
+    }
+    refreshCardButtons();
 }
 
 /* =========================================================
@@ -451,16 +628,7 @@ async function fetchRecommendations(options = {}) {
     currentResults = [];
     updateResultsActions(false);
 
-    resultsContainer.innerHTML = Array(5).fill(0).map(() => `
-        <div class="skeleton-card">
-            <div class="skeleton-img"></div>
-            <div class="skeleton-info">
-                <div class="skeleton-text skeleton-title"></div>
-                <div class="skeleton-text skeleton-score"></div>
-                <div class="skeleton-text skeleton-genres"></div>
-            </div>
-        </div>
-    `).join('');
+    resultsContainer.innerHTML = Array(5).fill(0).map(() => skeletonCardHTML()).join('');
 
     const params = new URLSearchParams();
 
@@ -562,45 +730,10 @@ function renderAnimeCards(list) {
         return;
     }
 
-    list.forEach(anime => {
-        const title = anime.title.english || anime.title.romaji;
-        const score = anime.averageScore ? `${anime.averageScore}%` : "N/A";
-        const genres = anime.genres ? anime.genres.slice(0, 3).join(", ") : "N/A";
-        // [CHANGED] Everything coming from the API is escaped before going into innerHTML
-        const cover = escapeHtml(anime.coverImage?.extraLarge || anime.coverImage?.large || "");
-        
-        // [ADDED] Grab dominant color from AniList, fallback to default primary color
-        const accentColor = anime.coverImage?.color || "#8b56b7";
-
-        const card = document.createElement("div");
-        card.className = "anime-card";
-
-        // [ADDED] Set CSS variable directly on the card element inline style
-        card.style.setProperty("--card-accent", accentColor);
-        
-        // [CHANGED] Added the optional "reason" line (e.g. "Matches your taste for Action & Drama")
-        card.innerHTML = `
-            <img src="${cover}" alt="${escapeHtml(title)}" loading="lazy" />
-            <div class="anime-info">
-                <h3>${escapeHtml(title)}</h3>
-                <p class="score">⭐ ${score}</p>
-                <p class="genres">${escapeHtml(genres)}</p>
-                ${anime.reason ? `<p class="reason-text">${escapeHtml(anime.reason)}</p>` : ""}
-            </div>
-        `;
-
-        // Keep modal open event on card click (ignoring clicks on the watch link itself)
-        card.addEventListener("click", (e) => {
-            if (!e.target.classList.contains("watch-btn")) {
-                openAnimeModal(anime.id);
-            }
-        });
-
-        // [ADDED] Cards can now be focused with Tab and opened with Enter / Space
-        makeCardAccessible(card, `View details: ${title}`, () => openAnimeModal(anime.id));
-
-        container.appendChild(card);
-    });
+    // [CHANGED] Every card now comes from the shared buildAnimeCard() so the whole site has the same card.
+    // showReason keeps the optional "Matches your taste for ..." line these results always had.
+    list.forEach(anime => container.appendChild(buildAnimeCard(anime, { showReason: true })));
+    refreshCardButtons();
 }
 
 const generateBtn = document.getElementById("generateBtn");
@@ -675,6 +808,142 @@ if (modal) {
 let modalRequestId = 0;
 let currentModalAnime = null;
 
+// [ADDED] True only for real http(s) links with a host (used to keep broken / unsafe streaming links out of the modal)
+function isValidWebUrl(value) {
+    try {
+        const u = new URL(String(value));
+        return (u.protocol === "https:" || u.protocol === "http:") && Boolean(u.hostname) && u.hostname.includes(".");
+    } catch (err) {
+        return false;
+    }
+}
+
+// [ADDED] Consistent provider icons (used when AniList has no logo for a site, or the logo fails to load)
+const AM_ICON_PROVIDER = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10.2 9.2v5.6l4.8-2.8z" fill="currentColor"/></svg>';
+const AM_ICON_SEARCH = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M15.2 15.2L20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+
+// [ADDED] Full-size banner viewer: opens the banner at its full width and quality on top of the details window.
+let amLightbox = null;
+let amLightboxOpener = null;
+
+function closeBannerLightbox() {
+    if (!amLightbox || amLightbox.classList.contains("hidden")) return;
+    amLightbox.classList.add("hidden");
+    const img = amLightbox.querySelector("img");
+    if (img) img.removeAttribute("src");
+    if (amLightboxOpener && document.contains(amLightboxOpener)) amLightboxOpener.focus();
+    amLightboxOpener = null;
+}
+
+function openBannerLightbox(src, title, opener) {
+    if (!isValidWebUrl(src)) return;
+
+    if (!amLightbox) {
+        amLightbox = document.createElement("div");
+        amLightbox.className = "am-lightbox hidden";
+        amLightbox.setAttribute("role", "dialog");
+        amLightbox.setAttribute("aria-modal", "true");
+        amLightbox.setAttribute("aria-label", "Banner image");
+        amLightbox.innerHTML = `
+            <div class="am-lightbox-bar">
+                <span class="am-lightbox-title"></span>
+                <a class="am-lightbox-orig" target="_blank" rel="noopener noreferrer">Open original ↗</a>
+                <button type="button" class="am-lightbox-close" aria-label="Close banner">&times;</button>
+            </div>
+            <div class="am-lightbox-stage"><img alt="" /></div>
+        `;
+        document.body.appendChild(amLightbox);
+
+        // Click on the dark area (not on the picture or the bar buttons) closes it
+        amLightbox.addEventListener("click", (e) => {
+            if (e.target.closest(".am-lightbox-stage img, .am-lightbox-orig, .am-lightbox-close")) return;
+            if (e.target.closest(".am-lightbox-bar") && !e.target.classList.contains("am-lightbox-bar")) return;
+            closeBannerLightbox();
+        });
+        amLightbox.querySelector(".am-lightbox-close").addEventListener("click", closeBannerLightbox);
+
+        // Escape closes only the banner viewer (capture phase, so the details window stays open underneath)
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && amLightbox && !amLightbox.classList.contains("hidden")) {
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                closeBannerLightbox();
+            }
+        }, true);
+    }
+
+    amLightboxOpener = opener || null;
+    amLightbox.querySelector(".am-lightbox-title").textContent = title || "";
+    amLightbox.querySelector(".am-lightbox-orig").href = src;
+    const img = amLightbox.querySelector("img");
+    img.alt = title ? `${title} banner` : "Banner image";
+    img.src = src;
+    amLightbox.classList.remove("hidden");
+    amLightbox.querySelector(".am-lightbox-close").focus();
+}
+
+// [ADDED] Builds the lines for the "Why this anime?" tab from what this browser knows:
+// the recommender's own reason (when the card had one), your AniList ratings, your favourites and the community score.
+function buildWhyReasons(anime) {
+    const reasons = [];
+    const animeId = Number(anime.id);
+    const genres = Array.isArray(anime.genres) ? anime.genres : [];
+
+    // 1) The recommender's own explanation, if this show came from a card that had one
+    const hint = modalReasonHints.get(animeId);
+    if (hint) reasons.push(hint);
+
+    // 2) Your AniList ratings (AniList may send a 10-point or a 100-point score, so both are handled)
+    const entries = [];
+    (Array.isArray(cachedWatchlist) ? cachedWatchlist : []).forEach(list => {
+        (list?.entries || []).forEach(entry => {
+            if (entry?.media && entry.media.id !== animeId) entries.push({ ...entry, listStatus: list.status });
+        });
+    });
+    const tenPoint = (s) => (s > 10 ? s / 10 : s);
+    const liked = entries.filter(entry => entry.score > 0 && tenPoint(entry.score) >= 7.7);
+
+    if (liked.length > 0 && genres.length > 0) {
+        const tally = {};
+        liked.forEach(entry => (entry.media.genres || []).forEach(g => { tally[g] = (tally[g] || 0) + 1; }));
+        const matchingGenres = genres
+            .filter(g => (tally[g] || 0) >= 2)
+            .sort((a, b) => tally[b] - tally[a])
+            .slice(0, 3);
+        if (matchingGenres.length > 0) {
+            reasons.push(`Matches the genres you rate highly: ${matchingGenres.join(", ")}`);
+        }
+
+        const similar = liked
+            .map(entry => ({ entry, shared: (entry.media.genres || []).filter(g => genres.includes(g)).length }))
+            .filter(item => item.shared >= 2)
+            .sort((a, b) => b.shared - a.shared || tenPoint(b.entry.score) - tenPoint(a.entry.score))
+            .slice(0, 2)
+            .map(item => item.entry.media.title?.english || item.entry.media.title?.romaji)
+            .filter(Boolean);
+        if (similar.length > 0) reasons.push(`Similar to shows you rated highly: ${similar.join(", ")}`);
+    }
+
+    // 3) Part of a franchise you already watched or favourited
+    const known = new Map();
+    entries.forEach(entry => {
+        if (entry.listStatus !== "PLANNING") known.set(entry.media.id, entry.media.title?.english || entry.media.title?.romaji);
+    });
+    getSeedPicks().forEach(pick => known.set(pick.id, pick.title));
+    const franchise = (anime.relations?.edges || [])
+        .filter(edge => edge?.node?.type === "ANIME" && known.has(edge.node.id))
+        .map(edge => known.get(edge.node.id))
+        .filter(Boolean);
+    if (franchise.length > 0) reasons.push(`Connected to ${franchise.slice(0, 2).join(" and ")}, which you already know`);
+
+    // 4) Community rating
+    if (anime.averageScore >= 81) {
+        reasons.push(`Highly rated by the community (${(anime.averageScore / 10).toFixed(1)}/10 on AniList)`);
+    }
+
+    return reasons.slice(0, 5);
+}
+
 // [CHANGED] Now returns the anime object when it rendered, or null when the request failed / was replaced.
 async function openAnimeModal(animeId) {
     if (!modal) return null;
@@ -720,133 +989,242 @@ async function openAnimeModal(animeId) {
         // Only http(s) links are accepted. The Miruro search button below stays as an extra option.
         const seenSites = new Set();
         const officialLinks = (anime.externalLinks || []).filter(link => {
-            if (link?.type !== "STREAMING" || !link.url || !/^https?:\/\//i.test(link.url)) return false;
+            if (link?.type !== "STREAMING" || !link.site || !isValidWebUrl(link.url)) return false;
             if (seenSites.has(link.site)) return false;
             seenSites.add(link.site);
             return true;
         }).slice(0, 6);
 
-        const officialLinksHTML = officialLinks.map(link => `
-            <a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" class="modal-watch-btn official-watch-btn">
-                ▶ ${escapeHtml(link.site)} ↗
-            </a>
-        `).join("");
-        
-        const trailerEmbed = anime.trailer?.site === "youtube" 
-            ? `<div class="trailer-container">
-                 <iframe src="https://www.youtube.com/embed/${escapeHtml(anime.trailer.id)}" frameborder="0" allowfullscreen></iframe>
-               </div>` 
-            : '';
+        // ---- Pieces of the new layout ----
+        const trailerUrl = getTrailerUrl(anime, rawTitle);
+        const trailerLabel = hasRealTrailer(anime) ? "Watch Trailer" : "Find Trailer";
+        const statusBadge = getCardStatusBadge(anime);
+        const scoreText = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : null;
+        const episodesText = anime.episodes ? `${anime.episodes} ${anime.episodes === 1 ? "Episode" : "Episodes"}` : (anime.status === "RELEASING" ? "Ongoing" : "");
+        const durationText = anime.duration ? `${anime.duration} min${anime.format === "MOVIE" ? "" : "/ep"}` : "";
+        const formatText = anime.format ? (CARD_FORMAT[anime.format] || String(anime.format).replace(/_/g, " ")) : "";
+        const AM_ICON_EPS = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg>';
+        const AM_ICON_CLOCK = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+        const metaItems = [
+            formatText ? `<span class="am-format">${escapeHtml(formatText)}</span>` : "",
+            episodesText ? `<span class="am-meta">${AM_ICON_EPS}${escapeHtml(episodesText)}</span>` : "",
+            durationText ? `<span class="am-meta">${AM_ICON_CLOCK}${escapeHtml(durationText)}</span>` : "",
+            anime.seasonYear ? `<span class="am-meta">${escapeHtml(anime.seasonYear)}</span>` : ""
+        ].filter(Boolean);
 
+        const bannerSrc = anime.bannerImage || anime.coverImage?.extraLarge || anime.coverImage?.large || "";
 
-        const animeRelations = anime.relations?.edges?.filter(edge => edge.node.type === "ANIME") || [];
-        
-        let relatedHTML = "";
-        if (animeRelations.length > 0) {
-            relatedHTML = `
-                <div class="related-section">
-                    <h3>Related Anime</h3>
-                    <div class="related-grid">
-                        ${animeRelations.slice(0, 6).map(edge => {
-                            // [CHANGED] Titles / relation types / ids / image URLs are escaped here too
-                            const relTitle = escapeHtml(edge.node.title.english || edge.node.title.romaji);
-                            const relType = escapeHtml(edge.relationType.replace(/_/g, " "));
-                            return `
-                                <div class="related-card" data-id="${escapeHtml(edge.node.id)}">
-                                    <img src="${escapeHtml(edge.node.coverImage?.large || "")}" alt="${relTitle}" />
-                                    <div class="related-info">
-                                        <p class="related-title">${relTitle}</p>
-                                        <span class="related-type">${relType}</span>
-                                    </div>
-                                </div>
-                            `;
-                        }).join("")}
-                    </div>
-                </div>
-            `;
-        }
+        // Where to Watch: official platforms get a logo (from AniList) or a consistent icon and open the real page;
+        // the Miruro tile is a different look on purpose, because it only runs a search.
+        const safeColor = (value) => (/^#[0-9a-f]{3,8}$/i.test(String(value || "")) ? value : "");
+        const officialTiles = officialLinks.map(link => {
+            const logoOk = isValidWebUrl(link.icon);
+            const tint = safeColor(link.color);
+            return `
+            <a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" class="am-watch-tile" aria-label="Watch on ${escapeHtml(link.site)} (opens the official page)">
+                <span class="am-watch-logo"${tint ? ` style="--logo-tint:${tint}"` : ""}>${logoOk ? `<img src="${escapeHtml(link.icon)}" alt="" loading="lazy" referrerpolicy="no-referrer" />` : AM_ICON_PROVIDER}</span>
+                <span class="am-watch-name">${escapeHtml(link.site)}</span>
+                <span class="am-watch-pill">Watch now <span aria-hidden="true">↗</span></span>
+            </a>`;
+        }).join("");
+
+        const watchTiles = `
+            ${officialLinks.length === 0 ? `<p class="am-watch-note">No official streaming links are listed for this anime.</p>` : ""}
+            <div class="am-watch-grid">
+                ${officialTiles}
+                <a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer" class="am-watch-tile am-watch-search" aria-label="Search for this anime on Miruro (not a direct link)">
+                    <span class="am-watch-logo">${AM_ICON_SEARCH}</span>
+                    <span class="am-watch-name">Miruro</span>
+                    <span class="am-watch-pill am-watch-pill-search">Search only</span>
+                </a>
+            </div>
+        `;
+
+        // Related anime cards (click opens that show in this same window)
+        const animeRelations = anime.relations?.edges?.filter(edge => edge?.node?.type === "ANIME") || [];
+        const relatedHTML = animeRelations.length > 0
+            ? `<div class="related-grid">
+                ${animeRelations.slice(0, 12).map(edge => {
+                    const relTitle = escapeHtml(edge.node.title.english || edge.node.title.romaji);
+                    const relType = escapeHtml(String(edge.relationType || "").replace(/_/g, " "));
+                    return `
+                        <div class="related-card" data-id="${escapeHtml(edge.node.id)}">
+                            <img src="${escapeHtml(edge.node.coverImage?.large || "")}" alt="${relTitle}" />
+                            <div class="related-info">
+                                <p class="related-title">${relTitle}</p>
+                                <span class="related-type">${relType}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join("")}
+               </div>`
+            : `<p class="am-empty">No related anime found for this one.</p>`;
+
+        // Why this anime?
+        const whyReasons = buildWhyReasons(anime);
+        const whyHTML = whyReasons.length > 0
+            ? `<ul class="am-why-list">${whyReasons.map(r => `<li><span class="am-why-star" aria-hidden="true">✦</span><span>${escapeHtml(r)}</span></li>`).join("")}</ul>`
+            : `<p class="am-empty">Connect your AniList or favourite a few shows and we'll explain why this one fits you.</p>`;
 
         modalBody.innerHTML = `
-            <div class="modal-header-banner">
-                ${anime.bannerImage ? `<img src="${escapeHtml(anime.bannerImage)}" class="banner-img" />` : ''}
-            </div>
-            <div class="modal-details-grid">
-                <img src="${escapeHtml(anime.coverImage.extraLarge)}" class="modal-poster" alt="${title}" />
-                <div class="modal-info">
-                    <h2>${title}</h2>
-                    <p class="native-title">${nativeTitle}</p>
-                    
-                    <div class="meta-badges">
-                        <span class="badge score">⭐ ${score}</span>
-                        <span class="badge">${format}</span>
-                        <span class="badge">${status}</span>
-                    </div>
+            <div class="am-root">
+                <div class="am-hero${anime.bannerImage ? " has-banner" : ""}">
+                    ${anime.bannerImage ? `<button type="button" class="am-banner-btn" id="amBannerBtn" aria-label="View the full banner image"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>View banner</span></button>` : ""}
+                    ${bannerSrc ? `<img src="${escapeHtml(bannerSrc)}" class="am-hero-bg${anime.bannerImage ? "" : " am-hero-bg-cover"}" alt="" aria-hidden="true" />` : ""}
+                    <div class="am-hero-shade"></div>
+                    <div class="am-top">
+                        <img src="${escapeHtml(anime.coverImage?.extraLarge || anime.coverImage?.large || "")}" class="am-poster" alt="${title}" />
+                        <div class="am-main">
+                            <h2 class="am-title">${title}</h2>
+                            ${nativeTitle ? `<p class="am-native">${nativeTitle}</p>` : ""}
 
-                    <div class="detail-row">
-                        <p><strong>Episodes:</strong> ${escapeHtml(anime.episodes || 'N/A')}</p>
-                        <p><strong>Season:</strong> ${seasonText}</p>
-                        <p><strong>Studio:</strong> ${studio}</p>
-                    </div>
+                            <div class="am-badges">
+                                <span class="am-status am-status-${statusBadge.cls}"><span class="am-status-dot" aria-hidden="true"></span>${escapeHtml(statusBadge.label)}</span>
+                                ${scoreText ? `<span class="am-score" title="AniList average score">★ ${scoreText}/10</span>` : ""}
+                                ${metaItems.join("")}
+                            </div>
 
-                    <div class="genres-list">
-                        ${anime.genres ? anime.genres.map(g => `<span class="genre-tag">${escapeHtml(g)}</span>`).join('') : ''}
-                    </div>
+                            <div class="am-genres">
+                                ${(anime.genres || []).map(g => `<span class="genre-tag">${escapeHtml(g)}</span>`).join("")}
+                            </div>
 
-                    <!-- [CHANGED] Official streaming links first, then the Miruro search link, then a Save button -->
-                    <div class="modal-watch-section">
-                        <h3>Where to Watch</h3>
-                        <div class="modal-watch-links">
-                            ${officialLinksHTML}
-                            <a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer" class="modal-watch-btn">
-                                Watch on Miruro ↗
-                            </a>
-                        </div>
-                        <div class="modal-action-row">
-                            <button type="button" id="modalSaveBtn" class="modal-save-btn"></button>
-                            <button type="button" id="modalDislikeBtn" class="modal-dislike-btn">👎 Not interested</button>
+                            <div class="am-synopsis-wrap">
+                                <p class="am-synopsis" id="amSynopsis">${description}</p>
+                                <button type="button" class="am-readmore hidden" id="amReadMore" aria-expanded="false" aria-controls="amSynopsis">Read more</button>
+                            </div>
+
+                            <div class="am-actions">
+                                <a href="${escapeHtml(trailerUrl)}" target="_blank" rel="noopener noreferrer" class="am-btn am-btn-primary">${CARD_ICONS.play}<span>${trailerLabel}</span></a>
+                                <button type="button" id="modalSaveBtn" class="am-btn"></button>
+                                <button type="button" id="modalFavBtn" class="am-btn"></button>
+                                <button type="button" id="modalDislikeBtn" class="am-btn am-btn-muted"><span aria-hidden="true">⊘</span><span>Not interested</span></button>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <h3>Synopsis</h3>
-                    <p class="synopsis">${description}</p>
-
-                    ${trailerEmbed}
-                    ${relatedHTML}
+                <div class="am-lower">
+                    <div class="am-tabs" role="tablist" aria-label="More about this anime">
+                        <button type="button" role="tab" class="am-tab active" id="amTab-watch" data-tab="watch" aria-selected="true" aria-controls="amPanel-watch">Where to Watch</button>
+                        <button type="button" role="tab" class="am-tab" id="amTab-why" data-tab="why" aria-selected="false" aria-controls="amPanel-why" tabindex="-1">Why this anime?</button>
+                        <button type="button" role="tab" class="am-tab" id="amTab-related" data-tab="related" aria-selected="false" aria-controls="amPanel-related" tabindex="-1">Related Anime${animeRelations.length ? ` <span class="am-tab-count">${Math.min(animeRelations.length, 12)}</span>` : ""}</button>
+                    </div>
+                    <div class="am-panels">
+                        <div class="am-panel" role="tabpanel" id="amPanel-watch" data-panel="watch" aria-labelledby="amTab-watch">
+                            ${watchTiles}
+                        </div>
+                        <div class="am-panel hidden" role="tabpanel" id="amPanel-why" data-panel="why" aria-labelledby="amTab-why">${whyHTML}</div>
+                        <div class="am-panel hidden" role="tabpanel" id="amPanel-related" data-panel="related" aria-labelledby="amTab-related">${relatedHTML}</div>
+                    </div>
                 </div>
             </div>
         `;
 
+        // Also tint the window itself with the poster colour (border glow)
+        const modalContentEl = modal.querySelector(".modal-content");
+        if (modalContentEl) modalContentEl.style.setProperty("--modal-accent", accentColor);
+
+        // ---- Banner viewer: the button, or a click on the artwork itself ----
+        if (anime.bannerImage) {
+            const heroEl = modalBody.querySelector(".am-hero");
+            const bannerBtn = document.getElementById("amBannerBtn");
+            if (bannerBtn) bannerBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                openBannerLightbox(anime.bannerImage, rawTitle, bannerBtn);
+            });
+            if (heroEl) heroEl.addEventListener("click", (e) => {
+                // text, buttons and the poster keep their own behaviour; only the open artwork opens the viewer
+                if (e.target.closest("a, button, .am-poster, .am-main > *")) return;
+                openBannerLightbox(anime.bannerImage, rawTitle, bannerBtn);
+            });
+        }
+
+        // ---- Synopsis: 3 lines, "Read more" only when the text is longer (the whole window scrolls, no inner scrollbar) ----
+        const synopsisEl = document.getElementById("amSynopsis");
+        const readMoreBtn = document.getElementById("amReadMore");
+        const checkSynopsisOverflow = () => {
+            if (!synopsisEl || !readMoreBtn || synopsisEl.classList.contains("expanded")) return;
+            readMoreBtn.classList.toggle("hidden", synopsisEl.scrollHeight <= synopsisEl.clientHeight + 1);
+        };
+        checkSynopsisOverflow();
+        requestAnimationFrame(checkSynopsisOverflow);
+        if (readMoreBtn) {
+            readMoreBtn.addEventListener("click", () => {
+                const open = synopsisEl.classList.toggle("expanded");
+                readMoreBtn.textContent = open ? "Show less" : "Read more";
+                readMoreBtn.setAttribute("aria-expanded", String(open));
+            });
+        }
+
+        // Provider logo failed to load -> fall back to the consistent icon
+        modalBody.querySelectorAll(".am-watch-logo img").forEach(img => {
+            img.addEventListener("error", () => { if (img.parentElement) img.parentElement.innerHTML = AM_ICON_PROVIDER; });
+        });
+
+        // ---- Tabs: Where to Watch / Why this anime? / Related Anime ----
+        const tabButtons = Array.from(modalBody.querySelectorAll(".am-tab"));
+        const selectTab = (name, moveFocus) => {
+            tabButtons.forEach(btn => {
+                const on = btn.dataset.tab === name;
+                btn.classList.toggle("active", on);
+                btn.setAttribute("aria-selected", String(on));
+                btn.tabIndex = on ? 0 : -1;
+                if (on && moveFocus) btn.focus();
+            });
+            modalBody.querySelectorAll(".am-panel").forEach(panel => {
+                panel.classList.toggle("hidden", panel.dataset.panel !== name);
+            });
+        };
+        tabButtons.forEach((btn, i) => {
+            btn.addEventListener("click", () => selectTab(btn.dataset.tab, false));
+            btn.addEventListener("keydown", (e) => {
+                if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+                e.preventDefault();
+                const next = tabButtons[(i + (e.key === "ArrowRight" ? 1 : tabButtons.length - 1)) % tabButtons.length];
+                selectTab(next.dataset.tab, true);
+            });
+        });
+
         modalBody.querySelectorAll(".related-card").forEach(card => {
             card.addEventListener("click", () => openAnimeModal(card.getAttribute("data-id")));
-            // [ADDED] keyboard access for related cards
+            // keyboard access for related cards
             makeCardAccessible(card, `View details: ${card.querySelector(".related-title")?.textContent || "related anime"}`,
                 () => openAnimeModal(card.getAttribute("data-id")));
         });
 
-        // [ADDED] "Save for later" toggle (saved shows appear in the "Saved For Later" section on the home page)
+        // ---- "Save for later" and "Favourite" buttons (same lists as the cards' + and heart) ----
         const saveBtn = document.getElementById("modalSaveBtn");
-        if (saveBtn) {
-            const refreshSaveBtn = () => {
+        const favBtn = document.getElementById("modalFavBtn");
+        const refreshActionBtns = () => {
+            if (saveBtn) {
                 const saved = isSaved(anime.id);
-                saveBtn.classList.toggle("saved", saved);
-                saveBtn.textContent = saved ? "✓ Saved for later" : "♡ Save for later";
-            };
-            refreshSaveBtn();
+                saveBtn.classList.toggle("is-active", saved);
+                saveBtn.setAttribute("aria-pressed", String(saved));
+                saveBtn.innerHTML = `${CARD_ICONS.plus}${CARD_ICONS.check}<span>${saved ? "Saved" : "Save for later"}</span>`;
+            }
+            if (favBtn) {
+                const fav = getSeedPicks().some(pick => pick.id === Number(anime.id));
+                favBtn.classList.toggle("is-active", fav);
+                favBtn.setAttribute("aria-pressed", String(fav));
+                favBtn.innerHTML = `${CARD_ICONS.heart}<span>${fav ? "Favourited" : "Favourite"}</span>`;
+            }
+        };
+        refreshActionBtns();
 
+        if (saveBtn) {
             saveBtn.addEventListener("click", () => {
-                if (isSaved(anime.id)) {
-                    removeSaved(anime.id);
-                    showToast("Removed from saved");
-                } else {
-                    saveAnime(anime);
-                    showToast("Saved for later");
-                }
-                refreshSaveBtn();
-                renderSavedRow();
+                handleCardAction("save", anime, rawTitle); // toggles + toast + refreshes the cards behind the window
+                refreshActionBtns();
+            });
+        }
+        if (favBtn) {
+            favBtn.addEventListener("click", () => {
+                handleCardAction("favourite", anime, rawTitle);
+                refreshActionBtns();
             });
         }
 
-        // [ADDED] "Not interested": hides this show from every future suggestion (same list as the Surprise Me skip)
+        // "Not interested": hides this show from every future suggestion (same list as the Surprise Me skip)
         const dislikeBtn = document.getElementById("modalDislikeBtn");
         if (dislikeBtn) {
             dislikeBtn.addEventListener("click", () => {
@@ -1326,7 +1704,7 @@ function renderContinueWatching() {
         return;
     }
 
-        row.innerHTML = "";
+    row.innerHTML = "";
     entries.slice(0, 10).forEach(entry => {
         const media = entry.media;
         const title = media.title.english || media.title.romaji;
@@ -1334,20 +1712,30 @@ function renderContinueWatching() {
         const total = media.episodes || null;
         const pct = total ? Math.min(100, Math.round((progress / total) * 100)) : 0;
         const nextEp = total && progress >= total ? null : progress + 1;
-        const cover = escapeHtml(media.coverImage?.large || media.coverImage?.medium || ""); // [CHANGED] escaped
+        const meta = getCardMeta(media);
         const watchUrl = `${API_BASE_URL}/api/watch?title=${encodeURIComponent(title)}`;
 
         const card = document.createElement("div");
         card.className = "anime-card";
+        card.dataset.animeId = media.id;
+        card.style.setProperty("--card-accent", media.coverImage?.color || "#8b56b7");
+
+        // [CHANGED] Same card as everywhere else; the action row is the "Next episode" link and a progress bar shows where you are
         card.innerHTML = `
-            <img src="${cover}" alt="${escapeHtml(title)}" loading="lazy" />
+            ${cardPosterHTML(media, title)}
             <div class="anime-info">
-                <h3>${escapeHtml(title)}</h3>
-                <p class="continue-progress-text">Ep ${progress}${total ? ` / ${total}` : ""}</p>
-                <div class="continue-bar"><div class="continue-bar-fill" style="width: ${pct}%;"></div></div>
-                <a class="continue-watch" href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer">
-                    ▶ ${nextEp ? `Next: Ep ${nextEp}` : "Rewatch"} ↗
-                </a>
+                <h3 title="${escapeHtml(title)}">${escapeHtml(title)}</h3>
+                ${meta ? `<p class="card-meta">${escapeHtml(meta)}</p>` : ""}
+                ${cardGenresHTML(media)}
+                <div class="continue-progress">
+                    <p class="continue-progress-text">Ep ${progress}${total ? ` / ${total}` : ""}</p>
+                    <div class="continue-bar"><div class="continue-bar-fill" style="width: ${pct}%;"></div></div>
+                </div>
+                <div class="card-actions">
+                    <a class="card-main-btn continue-watch" href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer">
+                        ${CARD_ICONS.play}<span>${nextEp ? `Next: Ep ${nextEp}` : "Rewatch"}</span>
+                    </a>
+                </div>
             </div>
         `;
 
@@ -1373,36 +1761,52 @@ function onUserChanged() {
    ANI-REC: SHARED CARD ROW HELPERS (used by Discover)
 ========================================================= */
 
-// Shared card helper for discover/saved rows. Keeps card actions and keyboard access,
-// but intentionally omits the per-card "matches your taste" line.
+// Shared card builder: used by the home results, every Discover row and anywhere else a show is shown as a card.
+// options.showReason -> also show the "Matches your taste for ..." line (only some rows ask for it)
+// options.removable  -> adds a small remove (x) button for saved shows
 function buildAnimeCard(anime, options = {}) {
-    const title = anime.title.english || anime.title.romaji;
-    const score = anime.averageScore ? `${anime.averageScore}%` : "N/A";
-    const genres = anime.genres ? anime.genres.slice(0, 3).join(", ") : "N/A";
-    const cover = escapeHtml(anime.coverImage?.extraLarge || anime.coverImage?.large || ""); // [CHANGED] escaped
-    
-    // [ADDED] Grab dominant color from AniList, fallback to default primary color
-    const accentColor = anime.coverImage?.color || "#8b56b7";
+    const title = anime.title?.english || anime.title?.romaji || "Untitled";
+    const meta = getCardMeta(anime);
+    const trailerLabel = hasRealTrailer(anime) ? "Watch Trailer" : "Find Trailer";
 
     const card = document.createElement("div");
     card.className = "anime-card";
     card.dataset.animeId = anime.id;
+    if (anime.reason) modalReasonHints.set(Number(anime.id), String(anime.reason));
 
-    // [ADDED] Set CSS variable directly on the card element inline style
-    card.style.setProperty("--card-accent", accentColor);
+    // Poster colour from AniList (falls back to the site's purple) -> used for the hover glow
+    card.style.setProperty("--card-accent", anime.coverImage?.color || "#8b56b7");
 
     card.innerHTML = `
-        <img src="${cover}" alt="${escapeHtml(title)}" loading="lazy" />
+        ${cardPosterHTML(anime, title)}
         <div class="anime-info">
-            <h3>${escapeHtml(title)}</h3>
-            <p class="score">⭐ ${score}</p>
-            <p class="genres">${escapeHtml(genres)}</p>
+            <h3 title="${escapeHtml(title)}">${escapeHtml(title)}</h3>
+            ${meta ? `<p class="card-meta">${escapeHtml(meta)}</p>` : ""}
+            ${cardGenresHTML(anime)}
+            <p class="card-synopsis">${getCardSynopsis(anime)}</p>
             ${options.showReason && anime.reason ? `<p class="reason-text">${escapeHtml(anime.reason)}</p>` : ""}
+            <div class="card-actions">
+                <a class="card-main-btn trailer-btn" href="${escapeHtml(getTrailerUrl(anime, title))}" target="_blank" rel="noopener noreferrer">
+                    ${CARD_ICONS.play}<span>${trailerLabel}</span>
+                </a>
+                <span class="card-icon-group">
+                    <button type="button" class="card-icon-btn card-save-btn" data-action="save">${CARD_ICONS.plus}${CARD_ICONS.check}</button>
+                    <button type="button" class="card-icon-btn card-fav-btn" data-action="favourite">${CARD_ICONS.heart}</button>
+                </span>
+            </div>
         </div>
     `;
-    // [CHANGED] The reason line is now opt-in (options.showReason) so shared rows stay clean, as the comment above says.
-    // Only the Discover "Based on Your Taste" row asks for it.
-    card.addEventListener("click", () => openAnimeModal(anime.id));
+
+    card.addEventListener("click", (e) => {
+        const actionBtn = e.target.closest("[data-action]");
+        if (actionBtn && card.contains(actionBtn)) {
+            e.stopPropagation(); // buttons never open the details window
+            handleCardAction(actionBtn.dataset.action, anime, title);
+            return;
+        }
+        if (e.target.closest(".card-actions")) return; // the trailer link opens in a new tab instead
+        openAnimeModal(anime.id);
+    });
     makeCardAccessible(card, `View details: ${title}`, () => openAnimeModal(anime.id));
 
     if (options.removable) {
@@ -1426,16 +1830,7 @@ function buildAnimeCard(anime, options = {}) {
 function showRowSkeleton(rowId, count = 6) {
     const row = document.getElementById(rowId);
     if (!row) return;
-    row.innerHTML = Array(count).fill(0).map(() => `
-        <div class="skeleton-card">
-            <div class="skeleton-img"></div>
-            <div class="skeleton-info">
-                <div class="skeleton-text skeleton-title"></div>
-                <div class="skeleton-text skeleton-score"></div>
-                <div class="skeleton-text skeleton-genres"></div>
-            </div>
-        </div>
-    `).join("");
+    row.innerHTML = Array(count).fill(0).map(() => skeletonCardHTML()).join("");
 }
 
 // [CHANGED] 4th argument = options passed to buildAnimeCard (e.g. { showReason: true })
@@ -1853,6 +2248,7 @@ function renderSeedPicks() {
 function onSeedsChanged() {
     discoverLoadedFor = undefined;
     renderSeedPicks();
+    refreshCardButtons(); // [ADDED] hearts on the cards follow
     const username = getStoredUsername();
     if (username) loadAffinityInsights(username);
 }
@@ -2549,6 +2945,7 @@ function handleRoute() {
     updateHeaderOnScroll();
     if (route === "discover") loadDiscover();
     if (route === "lists") renderListsPage();
+    refreshCardButtons(); // [ADDED] cards on the page we return to may be out of date (saved / favourites changed on the Lists page)
     if (route === "home" && pendingSearchFocus) {
         pendingSearchFocus = false;
         requestAnimationFrame(focusHomeSearch);

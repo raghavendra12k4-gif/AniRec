@@ -357,6 +357,15 @@ function toCardMedia(media, reason) {
         averageScore: media.averageScore,
         genres: media.genres,
         coverImage: media.coverImage,
+        // [ADDED] fields the redesigned cards show: status badge, "year • format • episodes", synopsis, trailer button
+        status: media.status ?? null,
+        format: media.format ?? null,
+        episodes: media.episodes ?? null,
+        seasonYear: media.seasonYear ?? null,
+        startDate: media.startDate ?? null,
+        nextAiringEpisode: media.nextAiringEpisode ?? null,
+        description: media.description ?? null,
+        trailer: media.trailer ?? null,
         reason: reason || null
     };
 }
@@ -455,14 +464,25 @@ const MEDIA_FEATURE_CORE = `
     seasonYear
     startDate {
         year
+        month
     }
 `;
-// Same + the cover (for anything that is shown as a card)
+// Same + the cover and the card extras (for anything that is shown as a card)
+// [CHANGED] status / description / trailer / nextAiringEpisode feed the redesigned cards (status badge, synopsis, trailer button)
 const MEDIA_FEATURE_FIELDS = `
     ${MEDIA_FEATURE_CORE}
     coverImage {
         extraLarge
         color
+    }
+    status
+    description(asHtml: false)
+    trailer {
+        id
+        site
+    }
+    nextAiringEpisode {
+        episode
     }
 `;
 
@@ -1539,6 +1559,22 @@ const candidateQuery = `
                     extraLarge
                     color
                 }
+                format
+                episodes
+                seasonYear
+                startDate {
+                    year
+                    month
+                }
+                status
+                description(asHtml: false)
+                trailer {
+                    id
+                    site
+                }
+                nextAiringEpisode {
+                    episode
+                }
             }
         }
     }
@@ -1718,7 +1754,13 @@ app.get("/api/search/cards", async (req, res) => {
                             averageScore
                             genres
                             format
+                            episodes
                             seasonYear
+                            startDate { year month }
+                            status
+                            description(asHtml: false)
+                            trailer { id site }
+                            nextAiringEpisode { episode }
                         }
                     }
                 }
@@ -1820,7 +1862,13 @@ app.get("/api/anime-cards", async (req, res) => {
                             averageScore
                             genres
                             format
+                            episodes
                             seasonYear
+                            startDate { year month }
+                            status
+                            description(asHtml: false)
+                            trailer { id site }
+                            nextAiringEpisode { episode }
                         }
                     }
                 }
@@ -1872,6 +1920,13 @@ app.get("/api/watchlist/:username", async (req, res) => {
                                     }
                                     episodes
                                     averageScore
+                                    genres
+                                    status
+                                    format
+                                    seasonYear
+                                    nextAiringEpisode {
+                                        episode
+                                    }
                                 }
                             }
                         }
@@ -1923,6 +1978,7 @@ app.get("/api/anime/:id", async (req, res) => {
                     description(asHtml: false)
                     averageScore
                     episodes
+                    duration
                     status
                     season
                     seasonYear
@@ -1941,6 +1997,8 @@ app.get("/api/anime/:id", async (req, res) => {
                         url
                         site
                         type
+                        icon
+                        color
                     }
                     relations {
                         edges {
@@ -2219,6 +2277,22 @@ app.get("/api/trending", async (req, res) => {
                             coverImage {
                                 extraLarge
                                 color
+                            }
+                            format
+                            episodes
+                            seasonYear
+                            startDate {
+                                year
+                                month
+                            }
+                            status
+                            description(asHtml: false)
+                            trailer {
+                                id
+                                site
+                            }
+                            nextAiringEpisode {
+                                episode
                             }
                         }
                     }
