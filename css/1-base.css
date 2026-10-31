@@ -1,0 +1,954 @@
+/* =========================================================
+   style part 1 of 5: BASE
+   Colours, layout shell, pop-up basics, profile, filter bar.
+   Design tokens (colours, radii), reset, sidebar + top bar, profile window, stats, watchlist, filters, search.
+   Load order matters: index.html must link the 5 css files in number
+   order (1 -> 5); later files override earlier ones.
+========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html { 
+    scroll-behavior: smooth; 
+}
+
+:root {
+    /* ---- Brand ----
+       Orange = action / selected (buttons, active tabs, active filters, focus).
+       Purple = ambient (glows, borders on hover, modal halo, genre chips). */
+    --accent: rgb(214, 141, 86);
+    --accent-hover: #e39a62;
+    --accent-soft: #f0b685;
+    --accent-ink: #1b130b;                      /* dark text that sits on an orange button */
+    --accent-tint: rgba(214, 141, 86, 0.14);
+    --accent-line: rgba(214, 141, 86, 0.45);
+    --primary: #8b56b7;
+    --primary-dark: #733f9e;
+    --accent-glow: rgba(139, 86, 183, 0.25);
+
+    /* ---- Surfaces (3 levels + a deeper one for pop-ups) ---- */
+    --bg: #0d0f11;
+    --surface-1: #16181c;                       /* cards, panels, sidebar */
+    --surface-2: #1d2025;                       /* inputs, chips, buttons */
+    --surface-3: #262a30;                       /* hover states, dropdown menus */
+    --surface-deep: #0f1115;                    /* modals */
+    --surface: var(--surface-1);
+    --surface-card: var(--surface-2);
+    --surface-solid: var(--surface-3);
+
+    /* ---- Lines, text, status ---- */
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --text: #f0f4f2;
+    --text-soft: #cfd3d9;
+    --muted: #9aa0a8;
+    --success: #72b280;
+    --danger: #e57373;
+
+    /* ---- Shape + motion: 3 radii, 1 timing ---- */
+    --r-sm: 10px;                               /* chips, inputs, small buttons */
+    --r-md: 16px;                               /* cards, panels */
+    --r-lg: 22px;                               /* modals, big feature cards */
+    --ease: 0.22s ease;
+    --lift: translateY(-2px);
+
+    --sidebar-w: 84px;
+    --page-pad: 44px;
+}
+
+body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "DM Sans", sans-serif;
+    line-height: 1.6;
+}
+
+body::-webkit-scrollbar { 
+    width: 0px; 
+}
+
+/* =========================================================
+   APP SHELL: left sidebar + slim top bar
+========================================================= */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--sidebar-w);
+    padding: 90px 0 24px;
+    background: rgba(16, 18, 20, 0.96);
+    border-right: 1px solid var(--border);
+    z-index: 950;
+}
+
+.nav-links .logo-icon{
+    position: absolute;
+    top: 20px;
+    left: 0;
+}
+
+.nav-links img{
+    width: 40px;
+}
+
+.nav-links ul {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    list-style: none;
+    width: 100%;
+}
+
+.nav-links li {
+    list-style: none;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.nav-links a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 64px;
+    padding: 10px 0;
+    border-radius: var(--r-md);
+    text-decoration: none;
+    color: var(--muted);
+    font-family: "Alata", sans-serif;
+    font-size: 11px;
+    line-height: 1;
+    letter-spacing: 0.3px;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.nav-links a svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.nav-links a:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-links a.active {
+    color: var(--accent);
+    background: rgba(214, 141, 86, 0.14);
+}
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    margin-left: var(--sidebar-w);
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.topbar.is-scrolled {
+    background-color: rgba(13, 15, 17, 0.78);
+    border-bottom: 1px solid var(--border);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+}
+
+.topbar-inner {
+    height: 68px;
+    padding: 0 var(--page-pad);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+}
+
+.logo { grid-column: 2; display: flex; }
+
+.logo img {
+    height: 34px;
+    width: auto;
+    max-width: 180px;
+    object-fit: contain;
+}
+
+/* Surprise Me lives in the sidebar; its menu flies out to the right */
+.nav-surprise-container { position: relative; }
+
+.nav-surprise-btn.active-indicator {
+    color: var(--accent) !important;
+    background: rgba(214, 141, 86, 0.14);
+}
+
+.surprise-menu {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 100%;
+    background-color: var(--surface-1);
+    border: 1px solid var(--border);
+    min-width: 250px;
+    border-radius: var(--r-sm);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    z-index: 1100;
+    padding: 6px 0;
+}
+
+/* Open menu on hover */
+.nav-surprise-container:hover .surprise-menu,
+.nav-surprise-container.open .surprise-menu { /* [CHANGED] ".open" is toggled by app.js so the menu works on touch + keyboard too */
+    display: flex;
+    flex-direction: column;
+}
+
+.surprise-option {
+    background: transparent;
+    color: var(--text-soft);
+    padding: 12px 16px;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: "DM Sans", sans-serif;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.surprise-option:hover {
+    background-color: var(--surface-3);
+    color: var(--accent);
+}
+
+/* =========================================================
+   SURPRISE MODAL ACTION BUTTONS (LIKE / DISLIKE)
+========================================================= */
+
+.surprise-action-bar {
+    display: flex;
+    gap: 12px;
+    margin: 20px 0 10px 0;
+    padding-top: 15px;
+    border-top: 1px solid var(--border);
+}
+
+.surprise-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: var(--r-sm);
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.surprise-action-btn.dislike {
+    background: rgba(229, 115, 115, 0.15);
+    color: var(--danger);
+    border: 1px solid rgba(229, 115, 115, 0.3);
+}
+
+.surprise-action-btn.dislike:hover {
+    background: rgba(229, 115, 115, 0.3);
+    transform: translateY(-2px);
+}
+
+.surprise-action-btn.like {
+    background: rgba(114, 178, 128, 0.2);
+    color: var(--success);
+    border: 1px solid rgba(114, 178, 128, 0.4);
+}
+
+.surprise-action-btn.like:hover {
+    background: rgba(114, 178, 128, 0.35);
+    transform: translateY(-2px);
+}
+
+/* =========================================================
+   USER PROFILE MODAL & NAV BUTTON STYLES
+========================================================= */
+
+.nav-profile-btn {
+    grid-column: 3;
+    justify-self: end;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: var(--surface-2);
+    color: var(--text-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.nav-profile-btn:hover {
+    background: var(--surface-3);
+    border-color: #555;
+}
+
+.nav-profile-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.nav-profile-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+}
+
+.profile-modal-content {
+    max-width: 480px;
+}
+
+.connect-input-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.connect-input-group input {
+    flex: 1;
+    padding: 10px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: #fff;
+    font-size: 14px;
+}
+
+.connect-input-group button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.connect-input-group button:hover {
+    background: var(--accent-hover);
+}
+
+/* Connected Header View */
+.user-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 20px 0;
+    padding: 15px;
+    background: var(--surface-2);
+    border-radius: var(--r-sm);
+}
+
+.user-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.connected-badge {
+    display: inline-block;
+    background: rgba(214, 141, 86, 0.25);
+    color: var(--success);
+    border: 1px solid var(--accent);
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+.disconnect-btn {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    padding: 8px 14px;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    font-size: 13px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.disconnect-btn:hover {
+    background: rgba(255, 85, 85, 0.1);
+}
+
+/* =========================================================
+   ANIME STATS DASHBOARD STYLES
+========================================================= */
+
+.stats-container {
+    margin: 15px 0;
+    padding: 15px;
+    background: var(--surface-1);
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border);
+}
+
+.stats-container h4 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: var(--surface-2);
+    padding: 10px;
+    border-radius: var(--r-sm);
+    text-align: center;
+    border: 1px solid var(--border);
+}
+
+.stat-value {
+    display: block;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.chart-title {
+    font-size: 12px;
+    color: var(--text-soft);
+    margin-bottom: 8px;
+}
+
+.genre-bars-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.genre-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+
+.genre-name {
+    width: 90px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-soft);
+}
+
+.bar-track {
+    flex: 1;
+    background: var(--surface-2);
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    background: var(--accent);
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.4s ease-in-out;
+}
+
+.genre-percent {
+    width: 35px;
+    text-align: right;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* =========================================================
+   ANIME TASTE PROFILE STYLES
+========================================================= */
+
+.taste-profile-container {
+    margin: 15px 0;
+    padding: 15px;
+    background: var(--surface-1);
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border);
+}
+
+.taste-profile-container h4 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+.taste-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.taste-badge {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: var(--r-lg);
+    font-size: 12px;
+    color: var(--text-soft);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.taste-badge strong {
+    color: var(--success);
+}
+
+.taste-quote-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(214, 141, 86, 0.1);
+    border-left: 3px solid var(--accent);
+    padding: 12px;
+    border-radius: 0 6px 6px 0;
+}
+
+.quote-icon {
+    font-size: 16px;
+}
+
+.taste-summary {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-soft);
+    font-style: italic;
+}
+
+/* =========================================================
+   PERSONAL WATCHLIST STYLES
+========================================================= */
+
+.watchlist-container {
+    margin: 15px 0;
+    padding: 15px;
+    background: var(--surface-1);
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border);
+}
+
+.watchlist-container h4 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+.watchlist-tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    color: #fff;
+    background: var(--surface-2);
+}
+
+.tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: bold;
+}
+
+.watchlist-content {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 4px;
+}
+
+/* Scrollbar customization */
+.watchlist-content::-webkit-scrollbar {
+    width: 5px;
+}
+.watchlist-content::-webkit-scrollbar-thumb {
+    background: var(--surface-3);
+    border-radius: 4px;
+}
+
+.watchlist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface-2);
+    padding: 6px 10px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border);
+}
+
+.watchlist-item img {
+    width: 36px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.watchlist-item-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.watchlist-item-title {
+    font-size: 12px;
+    color: var(--text-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 0 4px 0;
+}
+
+.watchlist-item-meta {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 10px;
+}
+
+.watchlist-loading, .watchlist-empty {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* Filter Section Grid Layout */
+.filter-sec {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    align-items: end;
+    gap: 1rem;
+    margin: 22px 0 34px;
+    padding: 0;
+    position: relative;
+    z-index: 20;   /* keeps the open dropdowns above the cards below */
+}
+
+.home-search {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    grid-column: 1 / -1;
+}
+
+.filter, .filter-username {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+}
+
+.filter-label {
+    margin-left: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+}
+
+.filter-btn {
+    width: 100%;
+    height: 42px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--surface-card);
+    color: rgb(180, 180, 180);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    border-color: var(--primary);
+    background: var(--surface-3);
+}
+
+/* Active Filter State */
+.filter-btn.active {
+    border-color: var(--accent) !important;
+    background: var(--accent-tint) !important;
+    color: #ffffff;
+}
+
+.btn-txt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Dot Badge for Selected Filters */
+.active-dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px rgba(214, 141, 86, 0.6);
+    animation: dotPulse 2s infinite ease-in-out;
+}
+
+@keyframes dotPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.8; }
+}
+
+.filter-btn svg {
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+}
+
+.filter.open .filter-btn svg {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.filter-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    min-width: 180px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 10px;
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+.filter-menu::-webkit-scrollbar { 
+    width: 4px; 
+}
+
+.filter-menu::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.filter.open .filter-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.filter-menu label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    color: rgb(180, 180, 180);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.filter-menu label:hover {
+    background: var(--surface-3);
+    color: #ffffff;
+}
+
+.filter-menu input {
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+/* User Input Field */
+.filter-username input {
+    width: 100%;
+    height: 42px;
+    padding: 10px 14px;
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    color: white;
+    border-radius: var(--r-sm);
+    outline: none;
+    font-size: 14px;
+}
+
+.filter-username input:focus {
+    border-color: var(--primary);
+}
+
+/* Action Control Buttons Group */
+.filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.action-btn-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.action-btn-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.generate-btn, .reset-btn {
+    height: 42px;
+    min-width: 46px;
+    padding: 0 14px;
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reset-btn {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+}
+
+.generate-btn:hover {
+    background: var(--primary-dark);
+    box-shadow: 0 0 15px var(--accent-glow);
+    transform: translateY(-2px);
+}
+
+.reset-btn:hover {
+    background: var(--surface-3);
+    color: #ffffff;
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* Results Section & Cards */
+@keyframes pulse {
+    0%, 100% { background-color: var(--surface-card); }
+    50% { background-color: var(--surface-3); }
+}
+
+.skeleton-card {
+    background: var(--surface-1);
+    border-radius: var(--r-md);
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.skeleton-img {
+    width: 100%;
+    aspect-ratio: 4 / 4;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-info {
+    padding: 12px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.skeleton-text {
+    height: 12px;
+    border-radius: var(--r-sm);
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-title { width: 70%; height: 18px; }
+.skeleton-meta { width: 45%; }
+.skeleton-chips { width: 80%; height: 22px; border-radius: 999px; }
+.skeleton-synopsis { width: 100%; }
+.skeleton-synopsis.short { width: 60%; }
+
+.anime-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+    gap: 1.1rem;
+}

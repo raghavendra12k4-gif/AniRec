@@ -1,0 +1,732 @@
+/* =========================================================
+   style part 4 of 5: MOBILE + DETAILS WINDOW
+   Touch/phone rules, details window, banner viewer.
+   First phone layer, the redesigned details window and the banner viewer.
+   Load order matters: index.html must link the 5 css files in number
+   order (1 -> 5); later files override earlier ones.
+========================================================= */
+
+/* =========================================================
+   [ADDED] MOBILE & TOUCH LAYER
+   Everything below only applies on phones / tablets / touch screens
+   (it sits inside media queries), so the desktop layout is untouched.
+   It is deliberately the LAST block in this file so it wins over the
+   earlier rules that have the same specificity.
+========================================================= */
+
+/* ---- Touch polish (no visible change on desktop) ---- */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+a, button, label, .anime-card, .list-tab, .tab-btn {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
+    touch-action: manipulation;   /* no double-tap-zoom delay on buttons */
+}
+
+/* ---- Touch screens: hover lifts would "stick" after a tap, so switch them off ---- */
+@media (hover: none) {
+    .anime-card:hover,
+    .related-card:hover,
+    .surprise-mode:hover,
+    .results-action-btn:hover,
+    .continue-cta:hover,
+    .generate-btn:hover,
+    .reset-btn:hover,
+    .stage-btn:hover,
+    .modal-watch-btn:hover,
+    .anime-info .watch-btn:hover,
+    .anime-info .continue-watch:hover,
+    .surprise-action-btn:hover,
+    .history-thumb:hover img {
+        transform: none;
+    }
+
+    .anime-card:hover img { transform: none; }
+}
+
+/* ---- Phones & small tablets ---- */
+@media (max-width: 760px) {
+
+    /* Safety net: nothing may push the page sideways. "clip" (unlike "hidden") keeps the sticky top bar working. */
+    body { overflow-x: clip; }
+
+    /* ----- Top bar ----- */
+    .topbar-inner { height: 58px; }
+    .logo img { height: 30px; max-width: 150px; }
+
+    /* ----- Bottom tab bar (the sidebar) ----- */
+    .nav-links .logo-icon { display: none; }          /* it was floating on top of the tabs */
+    .sidebar { padding: 0 6px; background: rgba(16, 18, 20, 0.98); }
+    .nav-links li { flex: 1 1 0; min-width: 0; }      /* 5 tabs share the width, so 320px phones fit too */
+    .nav-links li.nav-search-item { margin: 0; }
+    .nav-links a { width: 100%; max-width: 78px; }
+
+    /* ----- Page ----- */
+    main { padding-bottom: 104px; }                   /* room above the tab bar */
+    .page-head { margin-bottom: 18px; }
+    .page-head h1 { font-size: 1.7rem; }
+    .result-sec h2,
+    .continue-sec h2,
+    .row-header h2,
+    .lists-panel-head h2 { font-size: 1.2rem; }
+    .result-sec,
+    .continue-sec,
+    .discover-row { margin-bottom: 30px; }
+
+    /* Confirmation toast must sit ABOVE the tab bar, not behind it */
+    .toast {
+        bottom: 82px;
+        width: max-content;
+        max-width: calc(100vw - 32px);
+        text-align: center;
+    }
+
+    /* ----- Typing: 16px inputs stop iPhones zooming the page when a field is focused ----- */
+    .search-field input,
+    .connect-input-group input,
+    .seed-input,
+    .list-filter-input,
+    .filter-username input { font-size: 16px; }
+
+    .connect-input-group input { min-width: 0; }
+
+    /* ----- Home filters: two per row, dropdowns that stay on screen ----- */
+    .filter-sec { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin: 14px 0 26px; }
+    .filter-btn { padding: 10px 12px; }
+
+    .filter-menu {
+        width: max-content;
+        min-width: 100%;
+        max-width: calc(100vw - 36px);
+        max-height: min(280px, 45vh);
+        overscroll-behavior: contain;
+    }
+    /* filters 3, 5 and 7 (Genre, Year, Language) sit in the right column: open their menus towards the left */
+    .filter-sec > .filter:nth-child(odd) .filter-menu { left: auto; right: 0; }
+    .filter-menu label { padding: 12px 10px; }        /* bigger touch targets */
+
+    .filter-actions { grid-column: 1 / -1; gap: 10px; }
+    .action-btn-item { flex: 1; }
+    .generate-btn, .reset-btn { width: 100%; }
+
+    /* ----- Cards: compact, one or two per row depending on the width ----- */
+    .anime-results { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .card-poster, .skeleton-img { aspect-ratio: 16 / 10; }
+    .anime-info { padding: 0 14px 14px; }
+    .anime-info h3 { font-size: 16px; }
+    .anime-info .reason-text { font-size: 11px; }
+    .card-remove-btn { width: 34px; height: 34px; font-size: 15px; }
+
+    .results-note { margin: 0 0 14px; }
+    .results-actions { gap: 10px; }
+    .results-action-btn { flex: 1 1 140px; }
+
+    /* ----- Horizontal rows (Discover) ----- */
+    .row-scroller { gap: 12px; }
+    .row-header-split { flex-wrap: wrap; align-items: flex-end; }
+    .row-header-split > div { min-width: 0; flex: 1 1 200px; }
+    .because-search { padding: 14px; border-radius: var(--r-md); }
+    .because-suggest { max-height: 260px; }
+    .because-heading-row { flex-wrap: wrap; }
+
+    /* ----- Details pop-up ----- */
+    .modal-content {
+        width: 94%;
+        max-height: 88vh;
+        max-height: 88dvh;      /* follows the mobile browser's collapsing address bar */
+        padding: 18px 16px;
+        border-radius: var(--r-md);
+        overscroll-behavior: contain;   /* scrolling the pop-up never scrolls the page behind it */
+    }
+    .close-btn { width: 40px; height: 40px; }
+    .banner-img { height: 110px; margin-bottom: 14px; }
+    .modal-details-grid { gap: 16px; justify-content: center; }
+    .modal-details-grid::before {
+        left: 50%;
+        transform: translateX(-50%);
+        width: 150px;
+        height: 215px;
+    }
+    .modal-poster { width: 140px; height: 205px; }
+    .modal-info { flex: 1 1 100%; min-width: 0; }   /* was min-width: 260px, which overflowed small phones */
+    .modal-info h2 { font-size: 20px; }
+    .meta-badges { flex-wrap: wrap; }
+    .related-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+    .modal-action-row > * { flex: 1 1 140px; }
+
+    /* ----- Profile pop-up ----- */
+    .genre-name { width: 76px; }
+    .watchlist-content { max-height: 260px; }
+
+    /* ----- Surprise page ----- */
+    .surprise-modes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 16px 0 20px; }
+    .surprise-mode { padding: 14px; border-radius: var(--r-md); }
+    .mode-icon { width: 40px; height: 40px; font-size: 20px; }
+    .mode-name { font-size: 1rem; }
+    .mode-desc { font-size: 0.8rem; }
+
+    .stage-empty, .stage-loading { min-height: 220px; }
+    .stage-card { min-height: 0; border-radius: var(--r-md); }
+    .stage-body { padding: 18px; gap: 16px; }
+    .stage-poster { margin: 0 auto; }
+    .stage-info h2 { font-size: 1.4rem; }
+    .stage-actions { width: 100%; }
+    .stage-btn { flex: 1 1 calc(50% - 5px); padding: 12px 10px; }
+    .history-thumb { flex-basis: 96px; }
+
+    /* ----- Lists page ----- */
+    .lists-layout { gap: 14px; margin-top: 16px; }
+    .lists-rail { border-radius: var(--r-md); }
+    .list-filter-input { flex: 1; min-width: 0; }
+    .list-item { padding: 10px; gap: 10px; }
+    .list-item-main { gap: 12px; }
+    .list-action-btn { padding: 8px 10px; font-size: 12px; }
+}
+
+/* ---- Very small phones (iPhone SE, old Androids) ---- */
+@media (max-width: 360px) {
+    :root { --page-pad: 14px; }
+    .page-head h1 { font-size: 1.5rem; }
+    .nav-links a { font-size: 10px; }
+    .card-poster, .skeleton-img { aspect-ratio: 16 / 9.5; }
+    .modal-poster { width: 120px; height: 176px; }
+}
+
+/* ---- Phones held sideways: the left sidebar is taller than the screen, so tighten it ---- */
+@media (min-width: 761px) and (max-height: 520px) and (pointer: coarse) {
+    .sidebar { padding-top: 12px; overflow-y: auto; }
+    .sidebar::-webkit-scrollbar { width: 0; }
+    .nav-links .logo-icon { display: none; }
+    .nav-links ul { gap: 4px; }
+    .nav-links a { padding: 7px 0; }
+    .nav-links li.nav-search-item { margin-bottom: 8px; }
+    .modal-content { max-height: 92vh; max-height: 92dvh; }
+}
+
+/* =========================================================
+   DETAILS WINDOW (redesign): hero on top, tabs underneath
+   Top: poster + title + badges + genres + scrollable synopsis + action buttons
+   Bottom: tabs -> Where to Watch / Why this anime? / Related Anime
+========================================================= */
+#animeModal .modal-content {
+    padding: 0;
+    max-width: 880px;
+    width: 92%;
+    max-height: 90vh;
+    max-height: 90dvh;
+    border-radius: var(--r-md);
+    background: var(--surface-deep);
+    border: 1px solid rgba(139, 86, 183, 0.45);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 24px 70px rgba(0, 0, 0, 0.65),
+                0 0 50px -24px rgba(139, 86, 183, 0.8);
+    overscroll-behavior: contain;
+}
+
+#animeModal .close-btn {
+    position: sticky;
+    top: 12px;
+    float: right;
+    margin: 12px 12px -48px 0;
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
+    background: rgba(10, 10, 16, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+#animeModal .close-btn:hover { background: rgba(10, 10, 16, 0.9); }
+
+#animeModal .loading-msg,
+#animeModal .error-msg { padding: 70px 24px; }
+
+.am-root { --am-accent: var(--modal-accent, var(--primary)); }
+
+/* ---------- Hero ---------- */
+.am-hero {
+    position: relative;
+    overflow: hidden;
+    min-height: 360px;
+    display: flex;
+    align-items: flex-end;
+    padding: 90px 30px 28px;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    isolation: isolate;
+}
+.am-hero > .am-top { width: 100%; }
+
+.am-hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    z-index: -3;
+    filter: saturate(1.2) brightness(0.95);
+}
+/* no banner on AniList for this show: use the poster, enlarged and softened, as the backdrop */
+.am-hero-bg-cover { transform: scale(1.35); filter: blur(14px) saturate(1.4) brightness(0.7); }
+
+.am-hero-shade {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background:
+        /* soft vignette on the top edge: keeps the artwork cinematic */
+        linear-gradient(180deg, rgba(6, 6, 14, 0.45) 0%, rgba(6, 6, 14, 0) 26%),
+        /* dark wash behind the text column (left to right) */
+        linear-gradient(90deg, rgba(8, 8, 16, 0.94) 0%, rgba(8, 8, 16, 0.86) 38%, rgba(8, 8, 16, 0.55) 66%, rgba(8, 8, 16, 0.08) 92%),
+        /* heavier wash where the synopsis and buttons sit, melting into the tabs below */
+        linear-gradient(180deg, rgba(8, 8, 16, 0) 18%, rgba(10, 10, 18, 0.7) 58%, rgba(15, 17, 21, 0.94) 86%, var(--surface-deep) 100%);
+}
+
+.am-top {
+    display: flex;
+    gap: 26px;
+    align-items: flex-end;
+}
+
+.am-poster {
+    flex: none;
+    width: 150px;
+    height: 218px;
+    object-fit: cover;
+    border-radius: var(--r-sm);
+    border: 1px solid color-mix(in srgb, var(--am-accent) 60%, #ffffff22);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), 0 0 36px -8px var(--am-accent);
+    background: #1a1a24;
+}
+
+.am-main { flex: 1; min-width: 0; padding-right: 40px; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55); }
+
+.am-title {
+    margin: 0 0 4px;
+    font-size: 27px;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #fff;
+    overflow-wrap: anywhere;
+}
+
+.am-native {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: #a9a9c0;
+}
+
+.am-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.am-status,
+.am-score,
+.am-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.am-status { color: #fff; background: rgba(22, 163, 74, 0.85); border: 1px solid rgba(255, 255, 255, 0.18); }
+.am-status-finished  { background: rgba(20, 130, 84, 0.65);  border-color: rgba(52, 211, 153, 0.45); color: #b7f5da; }
+.am-status-airing    { background: rgba(22, 163, 74, 0.8);   border-color: rgba(74, 222, 128, 0.5); }
+.am-status-upcoming  { background: rgba(217, 119, 6, 0.8); }
+.am-status-cancelled { background: rgba(220, 38, 38, 0.8); }
+.am-status-hiatus    { background: rgba(71, 85, 105, 0.9); }
+.am-status-unknown   { background: rgba(58, 62, 70, 0.9); color: var(--text-soft); }
+
+.am-status-dot { display: none; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+.am-status-airing .am-status-dot { display: inline-block; animation: statusPulse 1.6s infinite; }
+
+.am-score {
+    color: #f0b685;
+    background: rgba(214, 141, 86, 0.16);
+    border: 1px solid rgba(214, 141, 86, 0.55);
+}
+
+.am-meta {
+    color: #d8d8ea;
+    padding: 4px 2px;
+    font-weight: 500;
+}
+.am-meta svg { opacity: 0.85; }
+.am-format {
+    padding: 3px 11px;
+    border-radius: var(--r-sm);
+    font-size: 12px;
+    font-weight: 600;
+    color: #e6e6f5;
+    background: rgba(10, 10, 20, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+.am-meta + .am-meta::before {
+    content: "";
+    width: 1px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.25);
+    margin-right: 8px;
+}
+
+.am-genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+#animeModal .am-genres .genre-tag {
+    padding: 5px 16px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    background: rgba(10, 10, 20, 0.5);
+    color: #ececf8;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+/* Synopsis: 3 lines + "Read more" (no inner scrollbar; the whole window scrolls) */
+.am-synopsis-wrap { margin-bottom: 16px; }
+.am-synopsis {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #e8e8f6;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+}
+.am-synopsis.expanded { display: block; -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
+
+.am-readmore {
+    margin-top: 6px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--accent);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    text-shadow: none;
+}
+.am-readmore:hover { text-decoration: underline; text-underline-offset: 3px; }
+.am-readmore:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+/* ---------- Action buttons ---------- */
+.am-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.am-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 15px;
+    border-radius: var(--r-sm);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(12, 12, 22, 0.55);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color: var(--text-soft);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.am-btn:hover { background: rgba(40, 40, 62, 0.85); border-color: rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
+.am-btn svg { flex: none; }
+.am-btn .icon-check { display: none; }
+.am-btn.is-active .icon-plus { display: none; }
+.am-btn.is-active .icon-check { display: block; }
+.am-btn.is-active { border-color: var(--accent-line); color: #fff; background: var(--accent-tint); }
+
+.am-btn-primary {
+    padding-left: 22px;
+    padding-right: 22px;
+    background: linear-gradient(135deg, var(--accent-hover), #c4733a);
+    border-color: transparent;
+    color: var(--accent-ink);
+    box-shadow: 0 6px 20px -6px rgba(214, 141, 86, 0.8);
+}
+.am-btn-primary:hover { background: linear-gradient(135deg, var(--accent-soft), var(--accent-hover)); border-color: transparent; }
+
+.am-btn-muted { color: var(--muted); }
+.am-btn-muted:hover { color: #ff9a9a; border-color: rgba(255, 120, 120, 0.5); }
+
+.am-btn:focus-visible,
+.am-tab:focus-visible,
+.am-watch-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Lower part: tabs + panels ---------- */
+.am-lower { padding: 0 28px 28px; }
+
+.am-tabs {
+    display: flex;
+    gap: 22px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.am-tabs::-webkit-scrollbar { display: none; }
+
+.am-tab {
+    position: relative;
+    flex: none;
+    background: none;
+    border: none;
+    padding: 12px 2px;
+    color: var(--muted);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.am-tab:hover { color: var(--text-soft); }
+.am-tab.active { color: #fff; }
+.am-tab.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(214, 141, 86, 0.55);
+}
+.am-tab-count {
+    display: inline-block;
+    min-width: 18px;
+    margin-left: 4px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(214, 141, 86, 0.2);
+    color: #f0b685;
+    font-size: 11px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.am-panels { min-height: 150px; }
+
+.am-empty { margin: 0; padding: 30px 8px; text-align: center; color: var(--muted); font-size: 14px; }
+
+/* Where to Watch */
+.am-watch-note { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+.am-watch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+
+.am-watch-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 10px 14px;
+    border-radius: var(--r-sm);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    color: var(--text-soft);
+    text-decoration: none;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.am-watch-tile:hover { transform: translateY(-3px); border-color: rgba(139, 86, 240, 0.8); background: rgba(139, 86, 240, 0.08); }
+
+.am-watch-logo {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    overflow: hidden;
+    border-radius: var(--r-sm);
+    color: #e9e0ff;
+    background: color-mix(in srgb, var(--logo-tint, #8b56f0) 24%, #15151f);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.am-watch-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+.am-watch-name { font-size: 13px; font-weight: 600; text-align: center; overflow-wrap: anywhere; }
+
+.am-watch-pill {
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-ink);
+    background: linear-gradient(135deg, var(--accent-hover), #c4733a);
+}
+
+/* Miruro: a search, not a direct link -> dashed, muted, different icon and label */
+.am-watch-search {
+    background: transparent;
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.22);
+}
+.am-watch-search .am-watch-logo { background: transparent; border-style: dashed; color: var(--text-soft); }
+.am-watch-search .am-watch-name { color: var(--text-soft); }
+.am-watch-pill-search {
+    background: transparent;
+    color: var(--text-soft);
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+/* Why this anime? */
+.am-why-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.am-why-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: var(--r-sm);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-soft);
+}
+.am-why-star { flex: none; color: var(--accent); margin-top: 1px; }
+
+/* Related Anime (reuses the existing .related-grid / .related-card look) */
+.am-panel .related-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.am-panel .related-card img { height: 150px; }
+
+/* ---------- Phones ---------- */
+@media (max-width: 760px) {
+    #animeModal .modal-content { width: 95%; border-radius: var(--r-md); }
+    .am-hero { min-height: 0; align-items: flex-start; padding: 64px 16px 18px; border-radius: 16px 16px 0 0; }
+    .am-top { flex-direction: column; align-items: center; gap: 16px; }
+    .am-poster { width: 140px; height: 205px; }
+    .am-main { padding-right: 0; width: 100%; }
+    .am-title { font-size: 21px; text-align: center; }
+    .am-native { text-align: center; }
+    .am-badges, .am-genres { justify-content: center; }
+    .am-hero-shade {
+        background:
+            linear-gradient(180deg, rgba(6, 6, 14, 0.4) 0%, rgba(8, 8, 16, 0.5) 22%, rgba(10, 10, 18, 0.9) 50%, var(--surface-deep) 100%);
+    }
+    .am-meta + .am-meta::before { display: none; }
+    .am-meta { padding: 4px 8px; }
+    .am-actions > * { flex: 1 1 calc(50% - 10px); }
+    .am-lower { padding: 0 16px 20px; }
+    .am-tabs { gap: 18px; }
+    .am-watch-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+    .am-panel .related-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+    .am-panel .related-card img { height: 130px; }
+}
+
+/* =========================================================
+   BANNER VIEWER (click the artwork or "View banner")
+========================================================= */
+.am-banner-btn {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(10, 10, 16, 0.55);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color: var(--text-soft);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+.am-banner-btn:hover { background: rgba(40, 40, 62, 0.85); border-color: rgba(139, 86, 240, 0.8); }
+.am-banner-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (min-width: 761px) {
+    /* empty artwork area passes clicks through to the hero, which opens the viewer */
+    .am-hero.has-banner { cursor: zoom-in; }
+    .am-hero.has-banner .am-main { pointer-events: none; }
+    .am-hero.has-banner .am-main > * { pointer-events: auto; cursor: default; width: fit-content; max-width: 100%; }
+    .am-hero.has-banner .am-main > .am-synopsis-wrap { max-width: 640px; }
+    .am-hero.has-banner .am-main .am-btn,
+    .am-hero.has-banner .am-main .am-readmore { cursor: pointer; }
+}
+
+.am-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 18px;
+    background: rgba(4, 4, 10, 0.94);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+.am-lightbox.hidden { display: none !important; }
+
+.am-lightbox-bar {
+    width: min(100%, 1900px);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--text-soft);
+}
+.am-lightbox-title { flex: 1; min-width: 0; font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.am-lightbox-orig { color: var(--accent); font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.am-lightbox-orig:hover { text-decoration: underline; text-underline-offset: 3px; }
+.am-lightbox-close {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+.am-lightbox-close:hover { background: rgba(255, 255, 255, 0.16); color: #ff8a8a; }
+.am-lightbox-close:focus-visible,
+.am-lightbox-orig:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.am-lightbox-stage {
+    max-width: 100%;
+    max-height: calc(100vh - 110px);
+    max-height: calc(100dvh - 110px);
+    overflow: auto;
+    border-radius: var(--r-sm);
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+.am-lightbox-stage img {
+    display: block;
+    max-width: calc(100vw - 36px);
+    max-height: calc(100vh - 110px);
+    max-height: calc(100dvh - 110px);
+    width: auto;
+    height: auto;
+}
+
+/* phones: the banner is very wide, so show it tall enough to see and let the picture scroll sideways */
+@media (max-width: 760px) {
+    .am-lightbox-stage img { max-width: none; height: 46vh; max-height: none; }
+}

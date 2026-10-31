@@ -13,8 +13,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Alata&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="filters-extra.css">
+    <!-- Styles: 5 files, loaded in this order (later files override earlier ones, so do not reorder) -->
+    <link rel="stylesheet" href="css/1-base.css">
+    <link rel="stylesheet" href="css/2-cards-pages.css">
+    <link rel="stylesheet" href="css/3-features.css">
+    <link rel="stylesheet" href="css/4-mobile-details.css">
+    <link rel="stylesheet" href="css/5-theme-mobile-tags.css">
 </head>
 <body>
     <!-- LEFT SIDEBAR: main navigation (icon above label) -->
@@ -78,7 +82,7 @@
         <p>Search for an anime, then refine your results with filters.</p>
     </section>
 
-    <section class="filter-sec">
+    <section class="filter-sec" id="filterSec">
         <div class="home-search">
             <label class="filter-label" for="homeSearchInput">Search anime</label>
             <div class="search-box">
@@ -88,170 +92,189 @@
                     <button id="homeSearchClear" class="search-clear hidden" type="button" aria-label="Clear anime search">&times;</button>
                     <div id="homeSearchSuggest" class="because-suggest hidden" role="listbox" aria-label="Anime search suggestions"></div>
                 </div>
+                <button id="filtersToggle" class="filters-toggle" type="button" aria-haspopup="dialog" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+                    <span>Filters</span>
+                    <span id="filtersCount" class="filters-count" hidden>0</span>
+                </button>
             </div>
         </div>
 
-        <!-- Mood -->
-        <div class="filter" data-filter-name="Mood">
-            <label class="filter-label">Mood</label>
-            <button class="filter-btn" data-filter-name="Mood" type="button">
-                <span class="btn-txt">🎭 Mood</span>
-                <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
-                    <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
-                </svg>
-            </button>
-            <div class="filter-menu">
-                <label><input type="checkbox" name="mood" value="relaxing"> 😌 Relaxing</label>
-                <label><input type="checkbox" name="mood" value="intense"> 🔥 Intense</label>
-                <label><input type="checkbox" name="mood" value="emotional"> 😭 Emotional</label>
-                <label><input type="checkbox" name="mood" value="thought-provoking"> 🧠 Thought-Provoking</label>
-                <label><input type="checkbox" name="mood" value="funny"> 😂 Funny</label>
-                <label><input type="checkbox" name="mood" value="disturbing"> 💀 Disturbing</label>
-                <label><input type="checkbox" name="mood" value="romance"> ❤️ Romance</label>
-            </div>
-        </div>
+        <!-- Phones: the filters that are switched on, as removable chips -->
+        <div class="active-filters hidden" id="activeFilters" aria-label="Active filters"></div>
 
-        <!-- Genre -->
-        <div class="filter" data-filter-name="Genre">
-            <label class="filter-label">Genre</label>
-            <button class="filter-btn" type="button">
-                <span class="btn-txt">Genre</span>
-                <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
-                    <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
-                </svg>
-            </button>
-            <div class="filter-menu">
-                <label><input type="checkbox" value="Action" name="genre"> Action</label>
-                <label><input type="checkbox" value="Adventure" name="genre"> Adventure</label>
-                <label><input type="checkbox" value="Comedy" name="genre"> Comedy</label>
-                <label><input type="checkbox" value="Drama" name="genre"> Drama</label>
-                <label><input type="checkbox" value="Ecchi" name="genre"> Ecchi</label>
-                <label><input type="checkbox" value="Fantasy" name="genre"> Fantasy</label>
-                <label><input type="checkbox" value="Horror" name="genre"> Horror</label>
-                <label><input type="checkbox" value="Mahou Shoujo" name="genre"> Mahou Shoujo</label>
-                <label><input type="checkbox" value="Mecha" name="genre"> Mecha</label>
-                <label><input type="checkbox" value="Music" name="genre"> Music</label>
-                <label><input type="checkbox" value="Mystery" name="genre"> Mystery</label>
-                <label><input type="checkbox" value="Psychological" name="genre"> Psychological</label>
-                <label><input type="checkbox" value="Romance" name="genre"> Romance</label>
-                <label><input type="checkbox" value="Sci-Fi" name="genre"> Sci-Fi</label>
-                <label><input type="checkbox" value="Slice of Life" name="genre"> Slice of Life</label>
-                <label><input type="checkbox" value="Sports" name="genre"> Sports</label>
-                <label><input type="checkbox" value="Supernatural" name="genre"> Supernatural</label>
-                <label><input type="checkbox" value="Thriller" name="genre"> Thriller</label>
+        <!-- On desktop this wrapper is invisible (display: contents). On phones it becomes a bottom sheet. -->
+        <div class="filter-sheet-backdrop" id="filterSheetBackdrop"></div>
+        <div class="filter-sheet" id="filterSheet" aria-label="Filters">
+            <div class="filter-sheet-head" id="filterSheetHead">
+                <span class="sheet-handle" aria-hidden="true"></span>
+                <h3 id="filterSheetTitle">Filters</h3>
+                <button id="filterSheetClose" class="sheet-close" type="button" aria-label="Close filters">&times;</button>
             </div>
-        </div>
+            <div class="filter-sheet-body">
+            <!-- Mood -->
+            <div class="filter" data-filter-name="Mood">
+                <label class="filter-label">Mood</label>
+                <button class="filter-btn" data-filter-name="Mood" type="button">
+                    <span class="btn-txt">🎭 Mood</span>
+                    <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
+                        <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
+                    </svg>
+                </button>
+                <div class="filter-menu">
+                    <label><input type="checkbox" name="mood" value="relaxing"> 😌 Relaxing</label>
+                    <label><input type="checkbox" name="mood" value="intense"> 🔥 Intense</label>
+                    <label><input type="checkbox" name="mood" value="emotional"> 😭 Emotional</label>
+                    <label><input type="checkbox" name="mood" value="thought-provoking"> 🧠 Thought-Provoking</label>
+                    <label><input type="checkbox" name="mood" value="funny"> 😂 Funny</label>
+                    <label><input type="checkbox" name="mood" value="disturbing"> 💀 Disturbing</label>
+                    <label><input type="checkbox" name="mood" value="romance"> ❤️ Romance</label>
+                </div>
+            </div>
 
-        <!-- Tag (searchable; the list is loaded from AniList by app.js) -->
-        <div class="filter filter-tag" data-filter-name="Tag">
-            <label class="filter-label">Tag</label>
-            <button class="filter-btn" type="button" aria-haspopup="true">
-                <span class="btn-txt">Tag</span>
-                <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
-                    <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
-                </svg>
-            </button>
-            <div class="filter-menu tag-menu">
-                <div class="tag-head">
-                    <div class="tag-search">
-                        <svg class="tag-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                        <input id="tagSearchInput" class="tag-search-input" type="text" maxlength="40" placeholder="Search tags…" autocomplete="off" aria-label="Search tags">
-                        <button id="tagSearchClear" class="tag-search-clear hidden" type="button" aria-label="Clear tag search">&times;</button>
+            <!-- Genre -->
+            <div class="filter" data-filter-name="Genre">
+                <label class="filter-label">Genre</label>
+                <button class="filter-btn" type="button">
+                    <span class="btn-txt">Genre</span>
+                    <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
+                        <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
+                    </svg>
+                </button>
+                <div class="filter-menu">
+                    <label><input type="checkbox" value="Action" name="genre"> Action</label>
+                    <label><input type="checkbox" value="Adventure" name="genre"> Adventure</label>
+                    <label><input type="checkbox" value="Comedy" name="genre"> Comedy</label>
+                    <label><input type="checkbox" value="Drama" name="genre"> Drama</label>
+                    <label><input type="checkbox" value="Ecchi" name="genre"> Ecchi</label>
+                    <label><input type="checkbox" value="Fantasy" name="genre"> Fantasy</label>
+                    <label><input type="checkbox" value="Horror" name="genre"> Horror</label>
+                    <label><input type="checkbox" value="Mahou Shoujo" name="genre"> Mahou Shoujo</label>
+                    <label><input type="checkbox" value="Mecha" name="genre"> Mecha</label>
+                    <label><input type="checkbox" value="Music" name="genre"> Music</label>
+                    <label><input type="checkbox" value="Mystery" name="genre"> Mystery</label>
+                    <label><input type="checkbox" value="Psychological" name="genre"> Psychological</label>
+                    <label><input type="checkbox" value="Romance" name="genre"> Romance</label>
+                    <label><input type="checkbox" value="Sci-Fi" name="genre"> Sci-Fi</label>
+                    <label><input type="checkbox" value="Slice of Life" name="genre"> Slice of Life</label>
+                    <label><input type="checkbox" value="Sports" name="genre"> Sports</label>
+                    <label><input type="checkbox" value="Supernatural" name="genre"> Supernatural</label>
+                    <label><input type="checkbox" value="Thriller" name="genre"> Thriller</label>
+                </div>
+            </div>
+
+            <!-- Tag (searchable; the list is loaded from AniList by app.js) -->
+            <div class="filter filter-tag" data-filter-name="Tag">
+                <label class="filter-label">Tag</label>
+                <button class="filter-btn" type="button" aria-haspopup="true">
+                    <span class="btn-txt">Tag</span>
+                    <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
+                        <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
+                    </svg>
+                </button>
+                <div class="filter-menu tag-menu">
+                    <div class="tag-head">
+                        <div class="tag-search">
+                            <svg class="tag-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                            <input id="tagSearchInput" class="tag-search-input" type="text" maxlength="40" placeholder="Search tags…" autocomplete="off" aria-label="Search tags">
+                            <button id="tagSearchClear" class="tag-search-clear hidden" type="button" aria-label="Clear tag search">&times;</button>
+                        </div>
+                        <div id="tagSelected" class="tag-selected hidden" aria-label="Selected tags"></div>
                     </div>
-                    <div id="tagSelected" class="tag-selected hidden" aria-label="Selected tags"></div>
+                    <div id="tagList" class="tag-list">
+                        <p class="tag-status">Loading tags…</p>
+                    </div>
                 </div>
-                <div id="tagList" class="tag-list">
-                    <p class="tag-status">Loading tags…</p>
-                </div>
             </div>
-        </div>
 
-        <!-- Rating -->
-        <div class="filter" data-filter-name="Rating">
-            <label class="filter-label">Rating</label>
-            <button class="filter-btn" type="button">
-                <span class="btn-txt">Rating</span>
-                <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
-                    <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
-                </svg>
-            </button>
-            <div class="filter-menu">
-                <label><input type="radio" name="rating" value="6"> 6+</label>
-                <label><input type="radio" name="rating" value="7"> 7+</label>
-                <label><input type="radio" name="rating" value="8"> 8+</label>
-                <label><input type="radio" name="rating" value="9"> 9+</label>
-            </div>
-        </div>
-
-        <!-- Year -->
-        <div class="filter" data-filter-name="Year">
-            <label class="filter-label">Year</label>
-            <button class="filter-btn" type="button">
-                <span class="btn-txt">Year</span>
-                <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
-                    <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
-                </svg>
-            </button>
-            <div class="filter-menu" id="yearFilterMenu">
-                <!-- JS populated dynamically from current year down to 1990 -->
-            </div>
-        </div>
-
-        <!-- Format -->
-        <div class="filter" data-filter-name="Format">
-            <label class="filter-label">Format</label>
-            <button class="filter-btn" type="button">
-                <span class="btn-txt">Format</span>
-                <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
-                    <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
-                </svg>
-            </button>
-            <div class="filter-menu">
-                <label><input type="radio" name="format" value="TV" data-label="TV"> TV</label>
-                <label><input type="radio" name="format" value="TV_SHORT" data-label="TV Short"> TV Short</label>
-                <label><input type="radio" name="format" value="Movie" data-label="Movie"> Movie</label>
-                <label><input type="radio" name="format" value="OVA" data-label="OVA"> OVA</label>
-                <label><input type="radio" name="format" value="ONA" data-label="ONA (Web)"> ONA (Web)</label>
-                <label><input type="radio" name="format" value="SPECIAL" data-label="Special"> Special</label>
-                <label><input type="radio" name="format" value="MUSIC" data-label="Music"> Music</label>
-            </div>
-        </div>
-
-        <!-- Language -->
-        <div class="filter" data-filter-name="Language">
-            <label class="filter-label">Language</label>
-            <button class="filter-btn" type="button">
-                <span class="btn-txt">Language</span>
-                <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
-                    <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
-                </svg>
-            </button>
-            <div class="filter-menu">
-                <label><input type="radio" name="language" value="Japanese"> Japanese</label>
-                <label><input type="radio" name="language" value="English"> English</label>
-                <label><input type="radio" name="language" value="Chinese"> Chinese</label>
-            </div>
-        </div>
-
-
-        <!-- Action Buttons -->
-        <div class="filter-actions">
-            <div class="action-btn-item">
-                <span class="action-btn-label">Apply</span>
-                <button class="generate-btn" id="generateBtn" type="button" title="Apply Filters">
-                    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-                        <path fill="none" d="M0 0h24v24H0z"></path>
-                        <path d="M4.25 5.61C6.27 8.2 10 13 10 13v6c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-6s3.72-4.8 5.74-7.39A.998.998 0 0 0 18.95 4H5.04c-.83 0-1.3.95-.79 1.61z"></path>
+            <!-- Rating -->
+            <div class="filter" data-filter-name="Rating">
+                <label class="filter-label">Rating</label>
+                <button class="filter-btn" type="button">
+                    <span class="btn-txt">Rating</span>
+                    <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
+                        <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
                     </svg>
                 </button>
+                <div class="filter-menu">
+                    <label><input type="radio" name="rating" value="6"> 6+</label>
+                    <label><input type="radio" name="rating" value="7"> 7+</label>
+                    <label><input type="radio" name="rating" value="8"> 8+</label>
+                    <label><input type="radio" name="rating" value="9"> 9+</label>
+                </div>
             </div>
-            <div class="action-btn-item">
-                <span class="action-btn-label">Reset</span>
-                <button class="reset-btn" id="resetBtn" type="button" title="Reset Filters">
-                    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M256 388c-72.597 0-132-59.405-132-132 0-72.601 59.403-132 132-132 36.3 0 69.299 15.4 92.406 39.601L278 234h154V80l-51.698 51.702C348.406 99.798 304.406 80 256 80c-96.797 0-176 79.203-176 176s78.094 176 176 176c81.045 0 148.287-54.134 169.401-128H378.85c-18.745 49.561-67.138 84-122.85 84z"></path>
+
+            <!-- Year -->
+            <div class="filter" data-filter-name="Year">
+                <label class="filter-label">Year</label>
+                <button class="filter-btn" type="button">
+                    <span class="btn-txt">Year</span>
+                    <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
+                        <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
                     </svg>
                 </button>
+                <div class="filter-menu" id="yearFilterMenu">
+                    <!-- JS populated dynamically from current year down to 1990 -->
+                </div>
+            </div>
+
+            <!-- Format -->
+            <div class="filter" data-filter-name="Format">
+                <label class="filter-label">Format</label>
+                <button class="filter-btn" type="button">
+                    <span class="btn-txt">Format</span>
+                    <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
+                        <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
+                    </svg>
+                </button>
+                <div class="filter-menu">
+                    <label><input type="radio" name="format" value="TV" data-label="TV"> TV</label>
+                    <label><input type="radio" name="format" value="TV_SHORT" data-label="TV Short"> TV Short</label>
+                    <label><input type="radio" name="format" value="Movie" data-label="Movie"> Movie</label>
+                    <label><input type="radio" name="format" value="OVA" data-label="OVA"> OVA</label>
+                    <label><input type="radio" name="format" value="ONA" data-label="ONA (Web)"> ONA (Web)</label>
+                    <label><input type="radio" name="format" value="SPECIAL" data-label="Special"> Special</label>
+                    <label><input type="radio" name="format" value="MUSIC" data-label="Music"> Music</label>
+                </div>
+            </div>
+
+            <!-- Language -->
+            <div class="filter" data-filter-name="Language">
+                <label class="filter-label">Language</label>
+                <button class="filter-btn" type="button">
+                    <span class="btn-txt">Language</span>
+                    <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
+                        <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
+                    </svg>
+                </button>
+                <div class="filter-menu">
+                    <label><input type="radio" name="language" value="Japanese"> Japanese</label>
+                    <label><input type="radio" name="language" value="English"> English</label>
+                    <label><input type="radio" name="language" value="Chinese"> Chinese</label>
+                </div>
+            </div>
+            </div>
+            <!-- Action Buttons -->
+            <div class="filter-actions">
+                <div class="action-btn-item">
+                    <span class="action-btn-label">Apply</span>
+                    <button class="generate-btn" id="generateBtn" type="button" title="Apply Filters">
+                        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="20" width="20" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="none" d="M0 0h24v24H0z"></path>
+                            <path d="M4.25 5.61C6.27 8.2 10 13 10 13v6c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-6s3.72-4.8 5.74-7.39A.998.998 0 0 0 18.95 4H5.04c-.83 0-1.3.95-.79 1.61z"></path>
+                        </svg>
+                        <span class="btn-label">Show results</span>
+                    </button>
+                </div>
+                <div class="action-btn-item">
+                    <span class="action-btn-label">Reset</span>
+                    <button class="reset-btn" id="resetBtn" type="button" title="Reset Filters">
+                        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="20" width="20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M256 388c-72.597 0-132-59.405-132-132 0-72.601 59.403-132 132-132 36.3 0 69.299 15.4 92.406 39.601L278 234h154V80l-51.698 51.702C348.406 99.798 304.406 80 256 80c-96.797 0-176 79.203-176 176s78.094 176 176 176c81.045 0 148.287-54.134 169.401-128H378.85c-18.745 49.561-67.138 84-122.85 84z"></path>
+                        </svg>
+                        <span class="btn-label">Reset</span>
+                    </button>
+                </div>
             </div>
         </div>
     </section>
@@ -525,6 +548,11 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- App code: 5 files, loaded in this order (they share one scope, so file 5 must be last) -->
+    <script src="js/1-core.js"></script>
+    <script src="js/2-filters.js"></script>
+    <script src="js/3-cards-details-profile.js"></script>
+    <script src="js/4-home-discover.js"></script>
+    <script src="js/5-surprise-lists-router.js"></script>
 </body>
 </html>

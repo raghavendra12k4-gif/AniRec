@@ -1,0 +1,972 @@
+/* =========================================================
+   style part 5 of 5: THEME, MOBILE v2, TAGS
+   Unified look, latest phone layout, Tag filter.
+   Unified design layer, the Filters bottom sheet / compact cards / bottom-sheet pop-ups, and the searchable Tag filter (must load LAST).
+   Load order matters: index.html must link the 5 css files in number
+   order (1 -> 5); later files override earlier ones.
+========================================================= */
+
+/* =========================================================
+   UNIFIED DESIGN LAYER
+   One look for the whole site. Everything here uses the tokens in :root
+   (surfaces, --accent orange for actions, --primary purple for glow,
+   --r-sm / --r-md / --r-lg radii, --ease timing).
+   To restyle the whole site later, change the tokens at the top of this file.
+========================================================= */
+
+::selection { background: rgba(214, 141, 86, 0.35); color: #fff; }
+
+/* One focus ring everywhere (:where keeps specificity at zero so specific rules can still win) */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+.card-main-btn:focus-visible,
+.card-icon-btn:focus-visible { outline-color: var(--accent); }
+
+/* ---------- 1. Page atmosphere: soft glows behind everything ---------- */
+body { background: var(--bg); }
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(900px 420px at 14% -6%, rgba(139, 86, 183, 0.17), transparent 70%),
+        radial-gradient(760px 380px at 92% 2%, rgba(214, 141, 86, 0.10), transparent 70%),
+        radial-gradient(1000px 520px at 50% 112%, rgba(139, 86, 183, 0.08), transparent 70%);
+}
+
+/* ---------- 2. Sidebar + top bar ---------- */
+.sidebar {
+    background: linear-gradient(180deg, rgba(23, 25, 30, 0.97), rgba(13, 15, 17, 0.97));
+    border-right: 1px solid var(--border);
+    box-shadow: 14px 0 40px -24px rgba(0, 0, 0, 0.8);
+}
+
+.nav-links a {
+    position: relative;
+    transition: color var(--ease), background var(--ease), transform var(--ease);
+}
+
+.nav-links a.active::before {
+    content: "";
+    position: absolute;
+    left: -10px;
+    top: 22%;
+    bottom: 22%;
+    width: 3px;
+    border-radius: 3px;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent-line);
+}
+
+.topbar.is-scrolled { border-bottom: 1px solid var(--border); }
+
+.nav-profile-btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    transition: border-color var(--ease), background var(--ease), box-shadow var(--ease);
+}
+.nav-profile-btn:hover {
+    background: var(--surface-3);
+    border-color: var(--accent-line);
+    box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+.surprise-menu {
+    background: var(--surface-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-sm);
+}
+.surprise-option:hover { background: rgba(255, 255, 255, 0.06); color: var(--accent); }
+
+/* ---------- 3. Page headings + section headings ---------- */
+.page-head { position: relative; }
+
+.page-head::before {
+    content: "";
+    position: absolute;
+    left: -70px;
+    top: -80px;
+    width: 460px;
+    height: 240px;
+    background: radial-gradient(closest-side, rgba(139, 86, 183, 0.22), transparent);
+    filter: blur(8px);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.page-head::after {
+    content: "";
+    display: block;
+    width: 56px;
+    height: 3px;
+    margin-top: 16px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--primary));
+}
+
+.page-head h1 { font-size: 2.3rem; letter-spacing: -0.01em; }
+
+.page-head h1 span {
+    color: var(--accent);   /* fallback */
+    background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* the little orange bar already on Discover rows now sits on every section title */
+.result-sec h2::before,
+.continue-sec h2::before,
+.lists-panel-head h2::before {
+    content: "";
+    display: inline-block;
+    width: 3px;
+    height: 18px;
+    margin-right: 10px;
+    background: var(--accent);
+    border-radius: 2px;
+    vertical-align: -2px;
+}
+
+/* ---------- 4. Filter bar: one glass panel ---------- */
+.filter-sec {
+    padding: 20px 22px 22px;
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01)),
+        var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: 0 20px 50px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.filter-label {
+    margin-left: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.filter-btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: var(--text-soft);
+    transition: border-color var(--ease), background var(--ease), box-shadow var(--ease);
+}
+.filter-btn:hover { background: var(--surface-3); border-color: var(--accent-line); }
+.filter.open .filter-btn { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-tint); }
+.filter-btn.active { color: #fff; box-shadow: inset 0 0 0 1px rgba(214, 141, 86, 0.15); }
+.filter-btn.active .btn-txt { font-weight: 600; }
+
+.filter-menu {
+    background: var(--surface-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-sm);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+}
+.filter-menu label { color: var(--text-soft); }
+.filter-menu label:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+.filter-menu input { accent-color: var(--accent); }
+
+.action-btn-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+/* Search + text inputs */
+.search-field input,
+.list-filter-input,
+.seed-input,
+.connect-input-group input,
+.filter-username input {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: #fff;
+    transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
+}
+.search-field input:focus,
+.list-filter-input:focus,
+.seed-input:focus,
+.connect-input-group input:focus,
+.filter-username input:focus {
+    outline: none;
+    background: var(--surface-1);
+    border-color: var(--accent-line);
+    box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.seed-input:focus-visible { outline: none; }
+
+/* ---------- 5. Buttons: orange = action, neutral = everything else ---------- */
+.generate-btn,
+.search-submit,
+.continue-cta,
+.connect-input-group button,
+.modal-watch-btn {
+    background: var(--accent);
+    background-color: var(--accent);
+    color: var(--accent-ink);
+    border: none;
+    border-radius: var(--r-sm);
+    font-weight: 700;
+    transition: background var(--ease), box-shadow var(--ease), transform var(--ease);
+}
+.generate-btn:hover,
+.search-submit:hover,
+.continue-cta:hover,
+.connect-input-group button:hover,
+.modal-watch-btn:hover {
+    background: var(--accent-hover);
+    background-color: var(--accent-hover);
+    box-shadow: 0 10px 26px -10px rgba(214, 141, 86, 0.75);
+}
+.modal-watch-btn.official-watch-btn { background-color: #2f7d57; color: #fff; }
+.modal-watch-btn.official-watch-btn:hover { background-color: #266646; box-shadow: none; }
+
+.card-main-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+}
+
+.reset-btn,
+.results-action-btn,
+.row-action-btn,
+.list-action-btn,
+.stage-btn,
+.surprise-action-btn {
+    border-radius: var(--r-sm);
+    transition: background var(--ease), border-color var(--ease), color var(--ease), box-shadow var(--ease), transform var(--ease);
+}
+
+.disconnect-btn { border-radius: var(--r-sm); border-color: rgba(229, 115, 115, 0.5); transition: background var(--ease); }
+
+/* the same lift + glow on hover, for every neutral button and panel */
+@media (hover: hover) {
+    .reset-btn:hover,
+    .results-action-btn:hover,
+    .row-action-btn:hover,
+    .list-action-btn:not(.danger):hover {
+        background: var(--surface-3);
+        border-color: var(--accent-line);
+        color: #fff;
+        transform: var(--lift);
+        box-shadow: 0 10px 24px -14px rgba(214, 141, 86, 0.6);
+    }
+    .surprise-mode:hover,
+    .list-item:hover,
+    .seed-result:hover:not(:disabled),
+    .watchlist-item:hover {
+        border-color: var(--accent-line);
+    }
+}
+
+/* ---------- 6. Panels on Home / Surprise / Lists ---------- */
+.because-search {
+    border-radius: var(--r-lg);
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 50px -34px rgba(0, 0, 0, 0.9);
+}
+
+.surprise-mode { border: 1px solid var(--border); }
+.surprise-mode.is-active { border-color: var(--accent-line); }
+
+.stage-card { border: 1px solid var(--border); }
+
+.lists-rail { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); }
+.list-tab { border-radius: var(--r-sm); transition: background var(--ease), color var(--ease); }
+.list-item { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); transition: border-color var(--ease), background var(--ease); }
+.list-item:hover { background: var(--surface-2); }
+
+.because-suggest { background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: var(--r-sm); }
+.suggest-item:hover, .suggest-item:focus-visible { background: rgba(255, 255, 255, 0.07); }
+
+.toast { background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: var(--r-sm); }
+
+/* ---------- 7. Pop-ups: profile window now matches the details window ---------- */
+.modal-overlay { background: rgba(5, 6, 10, 0.78); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+
+#profileModal .modal-content {
+    max-width: 540px;
+    padding: 28px;
+    background: var(--surface-deep);
+    border: 1px solid rgba(139, 86, 183, 0.45);
+    border-radius: var(--r-lg);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 24px 70px rgba(0, 0, 0, 0.65),
+                0 0 50px -24px rgba(139, 86, 183, 0.8);
+    overscroll-behavior: contain;
+}
+
+#profileModal .close-btn {
+    margin: -8px -8px 0 0;
+    background: rgba(10, 10, 16, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+#profileModal .close-btn:hover { background: rgba(10, 10, 16, 0.9); color: var(--accent); }
+
+#profileModal h2 { font-family: "Alata", sans-serif; font-size: 1.5rem; line-height: 1.2; margin-bottom: 6px; }
+#profileModal h2::before {
+    content: "";
+    display: inline-block;
+    width: 3px;
+    height: 18px;
+    margin-right: 10px;
+    background: var(--accent);
+    border-radius: 2px;
+    vertical-align: -1px;
+}
+#profileModal p { color: var(--muted); font-size: 0.92rem; }
+
+.user-header {
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(139, 86, 183, 0.18), rgba(214, 141, 86, 0.07)), var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+}
+.user-avatar { border: 2px solid var(--accent-line); }
+
+.connected-badge {
+    background: rgba(114, 178, 128, 0.12);
+    border: 1px solid rgba(114, 178, 128, 0.45);
+    color: var(--success);
+    border-radius: 999px;
+    padding: 2px 10px;
+}
+
+.stats-container,
+.taste-profile-container,
+.watchlist-container,
+.affinity-container,
+.seed-panel {
+    margin: 16px 0 0;
+    padding: 18px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+}
+
+.stats-container h4,
+.taste-profile-container h4,
+.watchlist-container h4,
+.affinity-container h4,
+.seed-panel h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 14px;
+    font-family: "Alata", sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.stats-container h4::before,
+.taste-profile-container h4::before,
+.watchlist-container h4::before,
+.affinity-container h4::before,
+.seed-panel h4::before {
+    content: "";
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--accent);
+}
+
+.stat-card { padding: 12px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); }
+.stat-value { font-family: "Alata", sans-serif; font-size: 1.3rem; font-weight: 400; }
+.stat-label { font-size: 11px; color: var(--muted); }
+
+.bar-track { background: var(--surface-3); }
+.bar-fill { background: linear-gradient(90deg, var(--accent), var(--accent-soft)); }
+.genre-name { color: var(--text-soft); }
+
+.taste-badge { background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; color: var(--text-soft); }
+.taste-badge strong { color: var(--accent-soft); }
+.taste-quote-box { background: var(--accent-tint); border-left: 3px solid var(--accent); border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+
+/* Watchlist tabs now look exactly like the tabs in the details window */
+.watchlist-tabs {
+    gap: 22px;
+    padding-bottom: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+    scrollbar-width: none;
+}
+.watchlist-tabs::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+    position: relative;
+    flex: none;
+    padding: 10px 2px;
+    background: none;
+    border-radius: 0;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+    transition: color var(--ease);
+}
+.tab-btn:hover { background: none; color: var(--text); }
+.tab-btn.active { background: none; color: #fff; font-weight: 600; }
+.tab-btn.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(214, 141, 86, 0.55);
+}
+
+.watchlist-item { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); transition: border-color var(--ease); }
+.watchlist-item img { border-radius: 6px; }
+
+.seed-result { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); }
+.seed-result:hover:not(:disabled) { background: var(--surface-3); }
+
+/* Details window: same radius + backdrop as the rest */
+#animeModal .modal-content { border-radius: var(--r-lg); }
+.am-hero { border-radius: var(--r-lg) var(--r-lg) 0 0; }
+
+/* ---------- 8. Small screens ---------- */
+@media (max-width: 760px) {
+    /* the sidebar becomes the bottom tab bar: indicator goes on top of the tab instead of the left edge */
+    .sidebar { background: rgba(16, 18, 20, 0.98); box-shadow: 0 -14px 30px -20px rgba(0, 0, 0, 0.9); }
+    .nav-links a.active::before { left: 26%; right: 26%; top: -3px; bottom: auto; width: auto; height: 3px; }
+    .filter-sec { padding: 14px; border-radius: var(--r-md); }
+    .page-head h1 { font-size: 1.7rem; }
+    #profileModal .modal-content { padding: 20px 16px; }
+    .stats-container,
+    .taste-profile-container,
+    .watchlist-container,
+    .affinity-container,
+    .seed-panel { padding: 14px; }
+    .page-head::before { left: -30px; width: 300px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reset-btn:hover,
+    .results-action-btn:hover,
+    .row-action-btn:hover,
+    .list-action-btn:hover,
+    .generate-btn:hover,
+    .continue-cta:hover { transform: none; }
+}
+
+
+/* =========================================================
+   MOBILE EXPERIENCE v2  (last block in the file on purpose)
+   - Filters: a "Filters" button + bottom sheet + chips for what is switched on
+   - Home results: compact list cards instead of one huge card per screen
+   - Discover rows: run edge to edge and snap, so the next card peeks in
+   - Details / profile windows: bottom sheets (swipe down to close)
+   - Polish: tap feedback, page fade, safe-area spacing, lighter effects
+   Everything phone-specific sits inside @media (max-width: 760px), so desktop is untouched.
+========================================================= */
+
+@keyframes pageIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes sheetUp {
+    from { opacity: 0.4; transform: translateY(36px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ---- Desktop: the sheet wrappers are invisible, the filters stay exactly where they were ---- */
+.filter-sheet,
+.filter-sheet-body { display: contents; }
+
+.filter-sheet-head,
+.filter-sheet-backdrop,
+.filters-toggle,
+.active-filters,
+.btn-label { display: none; }
+
+body.sheet-lock { overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+    main:not(.hidden) { animation: none !important; }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 760px) {
+
+    /* ----- Safe areas + a short fade when switching pages ----- */
+    .sidebar { height: calc(66px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); }
+    main { padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)); }
+    main:not(.hidden) { animation: pageIn 0.24s ease; }   /* no "forwards": a leftover transform would trap the fixed sheet */
+    .toast { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }
+
+    /* ----- Lighter effects: big blurs are what makes phones stutter while scrolling ----- */
+    .score-badge { background: rgba(10, 11, 14, 0.84); -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .modal-overlay { background: rgba(5, 6, 10, 0.84); -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .page-head::before { filter: none; }
+
+    /* ======================= FILTERS ======================= */
+    .filter-sec { display: block; padding: 12px; margin: 14px 0 22px; border-radius: var(--r-md); }
+    .filter-sec.sheet-open { z-index: 3000; }   /* above the tab bar (and everything else) while the sheet is open */
+
+    /* the "Search anime" label stays for screen readers only */
+    .home-search .filter-label {
+        position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+        overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    .home-search .search-box { flex-direction: row; align-items: center; gap: 10px; }
+    .home-search .search-field { min-width: 0; }
+    .home-search .search-field input { height: 44px; }
+    .home-search .search-icon { top: 12px; }
+    .home-search .search-clear { top: 6px; }
+
+    .filters-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex: none;
+        height: 44px;
+        padding: 0 14px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        color: var(--text-soft);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .filters-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .filters-toggle.has-filters { border-color: var(--accent-line); color: #fff; }
+    .filters-count {
+        min-width: 20px; height: 20px; padding: 0 6px;
+        border-radius: 999px;
+        background: var(--accent); color: var(--accent-ink);
+        font-size: 12px; font-weight: 700; line-height: 20px; text-align: center;
+    }
+    .filters-count[hidden] { display: none; }
+
+    /* chips for the filters that are switched on */
+    .active-filters:not(.hidden) {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        padding-bottom: 2px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .active-filters::-webkit-scrollbar { display: none; }
+    .filter-chip {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 32px;
+        padding: 5px 9px 5px 12px;
+        background: var(--accent-tint);
+        border: 1px solid var(--accent-line);
+        border-radius: 999px;
+        color: var(--accent-soft);
+        font: inherit;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .filter-chip-x { font-size: 16px; line-height: 1; opacity: 0.85; }
+
+    /* the bottom sheet itself */
+    .filter-sheet-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        background: rgba(5, 6, 10, 0.78);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+    .filter-sec.sheet-open .filter-sheet-backdrop { opacity: 1; pointer-events: auto; }
+
+    .filter-sheet {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+        max-height: 88vh;
+        max-height: 88dvh;
+        background: var(--surface-deep);
+        border: 1px solid rgba(139, 86, 183, 0.45);
+        border-bottom: 0;
+        border-radius: var(--r-lg) var(--r-lg) 0 0;
+        box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.6);
+        transform: translateY(105%);
+        visibility: hidden;
+        transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.3s;
+    }
+    .filter-sec.sheet-open .filter-sheet {
+        transform: none;
+        visibility: visible;
+        transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s;
+    }
+
+    .filter-sheet-head {
+        position: relative;
+        display: flex;
+        flex: none;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px 18px 10px;
+        touch-action: none;
+    }
+    .sheet-handle {
+        position: absolute;
+        top: 9px;
+        left: 50%;
+        width: 40px;
+        height: 4px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.24);
+        transform: translateX(-50%);
+    }
+    .filter-sheet-head h3 { margin: 0; font-family: "Alata", sans-serif; font-size: 1.2rem; font-weight: 400; color: #fff; }
+    .sheet-close {
+        width: 38px; height: 38px;
+        display: grid; place-items: center;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        color: #fff;
+        font-size: 22px; line-height: 1;
+        cursor: pointer;
+    }
+
+    .filter-sheet-body {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-content: start;
+        gap: 14px 12px;
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: 6px 18px 18px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    .filter-sheet-body .filter.open { grid-column: 1 / -1; }
+
+    /* menus open in place (an accordion) instead of floating over the page */
+    .filter-sheet .filter-menu {
+        display: none;
+        position: static;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        max-height: 250px;
+        margin-top: 8px;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        box-shadow: none;
+    }
+    .filter-sheet .filter.open .filter-menu { display: block; }
+
+    .filter-sheet .filter-actions {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        flex: none;
+        gap: 10px;
+        padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 0px));
+        background: var(--surface-deep);
+        border-top: 1px solid var(--border);
+    }
+    .filter-sheet .action-btn-item { display: block; }
+    .filter-sheet .action-btn-label { display: none; }
+    .filter-sheet .generate-btn,
+    .filter-sheet .reset-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        height: 46px;
+        font-size: 14px;
+    }
+    .filter-sheet .btn-label { display: inline; font-weight: 700; }
+
+    /* ======================= HOME RESULTS: compact list cards ======================= */
+    .anime-results { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+
+    .anime-results .anime-card {
+        display: grid;
+        grid-template-columns: 112px minmax(0, 1fr);
+        align-items: stretch;
+        min-height: 172px;
+    }
+    .anime-results .card-poster { aspect-ratio: auto; min-height: 172px; }
+    .anime-results .card-poster img {
+        -webkit-mask-image: linear-gradient(to right, #000 75%, transparent 100%);
+        mask-image: linear-gradient(to right, #000 75%, transparent 100%);
+        object-position: center;
+    }
+    .anime-results .status-badge { top: 8px; left: 8px; max-width: calc(100% - 16px); padding: 2px 8px; font-size: 10.5px; }
+    .anime-results .score-badge { top: auto; bottom: 8px; left: 8px; right: auto; padding: 2px 8px; font-size: 12px; }
+
+    .anime-results .anime-info { margin-top: 0; padding: 12px 12px 12px 4px; gap: 4px; }
+    .anime-results .anime-info h3 {
+        margin: 0;
+        font-size: 15.5px;
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+    }
+    .anime-results .card-meta { margin: 0 0 2px; }
+    .anime-results .card-genres { height: 22px; margin-bottom: 2px; }
+    .anime-results .card-synopsis { display: none; }   /* the full story is one tap away in the details window */
+    .anime-results .anime-info .reason-text {
+        margin-bottom: 6px;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .anime-results .skeleton-card { display: grid; grid-template-columns: 112px minmax(0, 1fr); min-height: 172px; }
+    .anime-results .skeleton-img { aspect-ratio: auto; height: 100%; min-height: 172px; }
+
+    /* card buttons: thumb-sized, and the Trailer pill gives way before the icons do */
+    .card-actions { gap: 6px; }
+    .card-main-btn { flex: 1 1 auto; min-width: 0; justify-content: center; padding: 9px 10px; overflow: hidden; }
+    .card-main-btn span { overflow: hidden; text-overflow: ellipsis; }
+    .card-icon-btn { width: 40px; height: 40px; }
+    .card-icon-group { flex: none; gap: 0; }
+
+    /* ======================= DISCOVER ROWS: edge to edge + snap ======================= */
+    .row-wrap { margin: 0 calc(var(--page-pad) * -1); }
+    .row-scroller {
+        gap: 12px;
+        padding-left: var(--page-pad);
+        padding-right: var(--page-pad);
+        scroll-padding-left: var(--page-pad);
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .row-scroller::-webkit-scrollbar { display: none; }
+    .row-scroller::after { content: ""; flex: 0 0 1px; }   /* Safari ignores trailing padding in scrollers */
+    .row-scroller .anime-card,
+    .row-scroller .skeleton-card { flex: 0 0 clamp(200px, 62vw, 250px); }
+
+    /* ======================= POP-UPS AS BOTTOM SHEETS ======================= */
+    .modal-overlay { align-items: flex-end; }
+
+    #animeModal .modal-content,
+    #profileModal .modal-content {
+        width: 100%;
+        max-width: none;
+        max-height: 92vh;
+        max-height: 92dvh;
+        border-bottom: 0;
+        border-radius: var(--r-lg) var(--r-lg) 0 0;
+        animation: sheetUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    #profileModal .modal-content { padding: 22px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
+    .am-lower { padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+
+    /* the little grab handle (stays visible while the content scrolls) */
+    #animeModal .modal-content::before,
+    #profileModal .modal-content::before {
+        content: "";
+        position: sticky;
+        top: 8px;
+        z-index: 6;
+        display: block;
+        width: 40px;
+        height: 4px;
+        margin: 8px auto -12px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        pointer-events: none;
+    }
+    #profileModal .modal-content::before { margin-top: 0; margin-bottom: 8px; top: 0; }
+
+    /* the tab row scrolls sideways: a soft fade on the right says so */
+    .am-tabs {
+        padding-right: 32px;
+        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent);
+        mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent);
+    }
+}
+
+/* very small phones: the play icon goes first so "Find Trailer" still fits */
+@media (max-width: 360px) {
+    .card-main-btn svg { display: none; }
+    .anime-results .anime-card,
+    .anime-results .skeleton-card { grid-template-columns: 96px minmax(0, 1fr); }
+}
+
+/* ---------- Touch screens: a quick press-down instead of hover ---------- */
+@media (hover: none) {
+    .anime-card, .card-main-btn, .card-icon-btn, .surprise-mode, .filter-btn, .filters-toggle,
+    .filter-chip, .list-item, .generate-btn, .reset-btn, .stage-btn, .am-btn {
+        transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+    .anime-card:active { transform: scale(0.985); }
+    .surprise-mode:active, .list-item:active { transform: scale(0.98); }
+    .card-main-btn:active, .filter-btn:active, .filters-toggle:active, .filter-chip:active,
+    .generate-btn:active, .reset-btn:active, .stage-btn:active, .am-btn:active { transform: scale(0.97); }
+    .card-icon-btn:active { transform: scale(0.88); }
+}
+
+
+/* =========================================================
+   filters-extra.css - styles for the searchable Tag filter.
+   Loaded after style.css (see index.html) and built only from the
+   tokens defined at the top of style.css (surfaces, --accent, radii).
+========================================================= */
+
+/* The tag menu is wider than the other dropdowns because tag names are long */
+.filter-tag .filter-menu.tag-menu {
+    width: 340px;
+    max-width: calc(100vw - 24px);
+    max-height: min(430px, 65vh);
+    padding: 0 10px 10px;
+    overscroll-behavior: contain;
+}
+
+/* Search box + chips stay pinned at the top while the list scrolls */
+.tag-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 -10px;
+    padding: 10px 10px 8px;
+    background: var(--surface-3);
+    border-bottom: 1px solid var(--border);
+}
+
+.tag-search { position: relative; }
+
+.tag-search-icon {
+    position: absolute;
+    left: 11px;
+    top: 11px;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+
+.tag-search-input {
+    width: 100%;
+    height: 38px;
+    padding: 0 34px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
+}
+.tag-search-input::placeholder { color: var(--muted); }
+.tag-search-input:focus {
+    outline: none;
+    background: var(--surface-1);
+    border-color: var(--accent-line);
+    box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+.tag-search-clear {
+    position: absolute;
+    right: 3px;
+    top: 3px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: var(--r-sm);
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+.tag-search-clear:hover { color: #fff; }
+
+/* Picked tags */
+.tag-selected {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    max-height: 84px;
+    overflow-y: auto;
+}
+
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 4px 11px;
+    background: var(--accent-tint);
+    border: 1px solid var(--accent-line);
+    border-radius: 999px;
+    color: var(--accent-soft);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--ease), color var(--ease);
+}
+.tag-chip:hover { background: rgba(214, 141, 86, 0.26); color: #fff; }
+.tag-chip-x { font-size: 15px; line-height: 1; opacity: 0.8; }
+.tag-limit-note { font-size: 11px; color: var(--muted); }
+
+/* The list */
+.tag-group-title {
+    padding: 14px 10px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.tag-group:first-child .tag-group-title { padding-top: 10px; }
+
+.tag-option.is-locked { opacity: 0.4; cursor: not-allowed; }
+.tag-option.is-locked input { cursor: not-allowed; }
+
+.tag-status {
+    padding: 18px 10px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+/* Phones: inside the filter sheet the tag menu opens in place, full width, like the other menus */
+@media (max-width: 760px) {
+    .filter-sheet .filter-tag .filter-menu.tag-menu {
+        width: 100%;
+        max-width: none;
+        max-height: 46vh;
+        max-height: 46dvh;
+    }
+    .tag-search-input { font-size: 16px; }   /* 16px stops iPhones zooming the page when the box is focused */
+    .tag-option.is-locked { opacity: 0.4; }
+}
