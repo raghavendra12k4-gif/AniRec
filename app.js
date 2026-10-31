@@ -454,12 +454,268 @@ function updateFilterActiveStates() {
             if (dot) dot.remove();
         }
     });
+
+    // The Tag menu also shows chips for the selected tags and locks extra tags at the limit
+    if (typeof refreshTagUI === "function") refreshTagUI();
 }
 
 // Watch changes on the filter section container
 const filterSection = document.querySelector('.filter-sec');
 if (filterSection) {
     filterSection.addEventListener('change', updateFilterActiveStates);
+}
+
+/* =========================================================
+   4b. TAG FILTER (searchable)
+   The list of tags comes from AniList through the server (/api/tags) and is cached there for a day.
+   - Typing in the box hides every tag that does not match.
+   - Picked tags show as chips at the top of the menu (click a chip to remove it).
+   - AniList only returns shows that have EVERY picked tag, so the number of tags is limited.
+========================================================= */
+
+const MAX_TAGS_SELECTED = 5;
+const tagFilter = document.querySelector(".filter-tag");
+const tagListEl = document.getElementById("tagList");
+const tagSearchInput = document.getElementById("tagSearchInput");
+const tagSearchClear = document.getElementById("tagSearchClear");
+const tagSelectedEl = document.getElementById("tagSelected");
+let allTags = [];
+let tagsFailed = false;
+
+function getCheckedTags() {
+    return Array.from(document.querySelectorAll('input[name="tags"]:checked')).map(input => input.value);
+}
+
+// "Theme-Sci-Fi" -> "Theme · Sci-Fi"
+function formatTagCategory(category) {
+    return String(category || "Other").replace("-", " · ");
+}
+
+function tagCategoryRank(category) {
+    const top = String(category || "").split("-")[0];
+    const order = { Theme: 0, Setting: 1, Cast: 2, Demographic: 3, Technical: 5 };
+    return order[top] ?? 4;
+}
+
+function showTagStatus(message) {
+    if (!tagListEl) return;
+    tagListEl.textContent = "";
+    const note = document.createElement("p");
+    note.className = "tag-status";
+    note.textContent = message;
+    tagListEl.appendChild(note);
+}
+
+function renderTagList() {
+    if (!tagListEl) return;
+    const alreadyChecked = new Set(getCheckedTags());
+    tagListEl.textContent = "";
+
+    if (allTags.length === 0) {
+        showTagStatus("No tags available right now.");
+        return;
+    }
+
+    const groups = new Map();
+    allTags.forEach(tag => {
+        const category = tag.category || "Other";
+        if (!groups.has(category)) groups.set(category, []);
+        groups.get(category).push(tag);
+    });
+
+    const categories = Array.from(groups.keys()).sort((a, b) =>
+        tagCategoryRank(a) - tagCategoryRank(b) || a.localeCompare(b));
+
+    categories.forEach(category => {
+        const group = document.createElement("div");
+        group.className = "tag-group";
+
+        const title = document.createElement("div");
+        title.className = "tag-group-title";
+        title.textContent = formatTagCategory(category);
+        group.appendChild(title);
+
+        groups.get(category)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .forEach(tag => {
+                const label = document.createElement("label");
+                label.className = "tag-option";
+                label.dataset.search = tag.name.toLowerCase();
+                if (tag.description) label.title = tag.description;
+
+                const input = document.createElement("input");
+                input.type = "checkbox";
+                input.name = "tags";
+                input.value = tag.name;
+                input.checked = alreadyChecked.has(tag.name);
+
+                label.append(input, document.createTextNode(tag.name));
+                group.appendChild(label);
+            });
+
+        tagListEl.appendChild(group);
+    });
+
+    const empty = document.createElement("p");
+    empty.className = "tag-status hidden";
+    empty.id = "tagEmpty";
+    empty.textContent = "No tags match your search.";
+    tagListEl.appendChild(empty);
+
+    filterTagList();
+    refreshTagUI();
+}
+
+// Hides the tags (and whole groups) that do not match what was typed
+function filterTagList() {
+    if (!tagListEl) return;
+    const query = (tagSearchInput ? tagSearchInput.value : "").trim().toLowerCase();
+    let visibleTotal = 0;
+
+    tagListEl.querySelectorAll(".tag-group").forEach(group => {
+        let visibleInGroup = 0;
+        group.querySelectorAll(".tag-option").forEach(option => {
+            const matches = !query || option.dataset.search.includes(query);
+            option.classList.toggle("hidden", !matches);
+            if (matches) visibleInGroup++;
+        });
+        group.classList.toggle("hidden", visibleInGroup === 0);
+        visibleTotal += visibleInGroup;
+    });
+
+    const empty = document.getElementById("tagEmpty");
+    if (empty) empty.classList.toggle("hidden", visibleTotal > 0);
+    if (tagSearchClear) tagSearchClear.classList.toggle("hidden", !query);
+}
+
+// Chips for the picked tags + lock the unpicked ones once the limit is reached
+function refreshTagUI() {
+    if (!tagListEl || !tagSelectedEl) return;
+    const selected = getCheckedTags();
+    const atLimit = selected.length >= MAX_TAGS_SELECTED;
+
+    tagListEl.querySelectorAll(".tag-option").forEach(option => {
+        const input = option.querySelector("input");
+        const locked = atLimit && !input.checked;
+        input.disabled = locked;
+        option.classList.toggle("is-locked", locked);
+    });
+
+    tagSelectedEl.textContent = "";
+    tagSelectedEl.classList.toggle("hidden", selected.length === 0);
+    selected.forEach(name => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "tag-chip";
+        chip.dataset.tag = name;
+        chip.setAttribute("aria-label", `Remove tag ${name}`);
+        chip.append(document.createTextNode(name));
+        const cross = document.createElement("span");
+        cross.className = "tag-chip-x";
+        cross.setAttribute("aria-hidden", "true");
+        cross.textContent = "×";
+        chip.appendChild(cross);
+        tagSelectedEl.appendChild(chip);
+    });
+    if (atLimit) {
+        const note = document.createElement("span");
+        note.className = "tag-limit-note";
+        note.textContent = `Limit of ${MAX_TAGS_SELECTED} reached`;
+        tagSelectedEl.appendChild(note);
+    }
+}
+
+function resetTagSearch() {
+    if (tagSearchInput) tagSearchInput.value = "";
+    filterTagList();
+}
+
+function loadTags() {
+    tagsFailed = false;
+    return fetch(`${API_BASE_URL}/api/tags`)
+        .then(response => {
+            if (!response.ok) throw new Error("Tag request failed");
+            return response.json();
+        })
+        .then(list => {
+            allTags = Array.isArray(list) ? list.filter(tag => tag && typeof tag.name === "string") : [];
+            renderTagList();
+        })
+        .catch(error => {
+            console.error("Tag list error:", error);
+            tagsFailed = true;
+            allTags = [];
+            showTagStatus("Couldn't load tags. Check that the server is running, then close and reopen this menu to retry.");
+        });
+}
+
+// Resolves when the list is on the page (also when loading failed), so restoring a shared link can wait for it
+let tagsReady = tagFilter ? loadTags() : Promise.resolve();
+
+if (tagFilter) {
+    const tagButton = tagFilter.querySelector(".filter-btn");
+    const tagMenu = tagFilter.querySelector(".filter-menu");
+
+    // Runs right after the dropdown toggle above: keep the wide menu on screen, retry a failed load, focus the box
+    tagButton.addEventListener("click", () => {
+        if (!tagFilter.classList.contains("open")) return;
+
+        tagMenu.style.left = "0px";
+        tagMenu.style.right = "auto";
+        const margin = 12;
+        const rect = tagFilter.getBoundingClientRect();
+        const menuWidth = tagMenu.offsetWidth;
+        let shift = 0;
+        if (rect.left + menuWidth > window.innerWidth - margin) {
+            shift = (window.innerWidth - margin) - (rect.left + menuWidth);
+        }
+        if (rect.left + shift < margin) shift = margin - rect.left;
+        tagMenu.style.left = `${shift}px`;
+
+        if (tagsFailed) {
+            showTagStatus("Loading tags…");
+            tagsReady = loadTags();
+        }
+        // Only focus the box where there is a real pointer; on phones it would pop the keyboard up unasked
+        if (window.matchMedia("(hover: hover)").matches && tagSearchInput) {
+            setTimeout(() => tagSearchInput.focus({ preventScroll: true }), 60);
+        }
+    });
+
+    if (tagSearchInput) {
+        tagSearchInput.addEventListener("input", filterTagList);
+        tagSearchInput.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                tagFilter.classList.remove("open");
+                tagButton.focus();
+            } else if (event.key === "Enter") {
+                event.preventDefault();
+                // Enter toggles the first tag that is still visible
+                const firstMatch = Array.from(tagListEl.querySelectorAll(".tag-option:not(.hidden) input:not(:disabled)"))[0];
+                if (firstMatch) firstMatch.click();
+            }
+        });
+    }
+
+    if (tagSearchClear) {
+        tagSearchClear.addEventListener("click", () => {
+            resetTagSearch();
+            if (tagSearchInput) tagSearchInput.focus();
+        });
+    }
+
+    if (tagSelectedEl) {
+        tagSelectedEl.addEventListener("click", event => {
+            const chip = event.target.closest(".tag-chip");
+            if (!chip) return;
+            const input = Array.from(document.querySelectorAll('input[name="tags"]'))
+                .find(candidate => candidate.value === chip.dataset.tag);
+            if (input) {
+                input.checked = false;
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+        });
+    }
 }
 
 /* =========================================================
@@ -534,6 +790,7 @@ if (resetBtn) {
 
 
         // Reset filter button labels & UI states
+        resetTagSearch();
         updateFilterActiveStates();
 
         // Close any open filter dropdowns
@@ -571,6 +828,9 @@ function getPreferences() {
     ...document.querySelectorAll('input[name="genre"]:checked')
   ].map(input => input.value);
 
+  // Tags picked in the (searchable) Tag filter
+  const selectedTags = getCheckedTags();
+
   // Grab radio inputs
   const ratingInput = document.querySelector('input[name="rating"]:checked');
   const yearInput = document.querySelector('input[name="year"]:checked');
@@ -583,6 +843,7 @@ function getPreferences() {
   return {
     moods: selectedMoods,
     genres: selectedGenres,
+    tags: selectedTags,
     rating: ratingInput ? ratingInput.value : null,
     year: yearInput ? yearInput.value : null,
     format: formatInput ? formatInput.value : null,
@@ -659,6 +920,7 @@ async function fetchRecommendations(options = {}) {
     resolvedGenres.forEach(g => params.append("genre", g));
     resolvedMoodGenres.forEach(g => params.append("moodGenre", g)); // [ADDED]
     resolvedTags.forEach(t => params.append("tag", t)); // Pass tags to server
+    prefs.tags.forEach(t => params.append("userTag", t)); // tags the user picked in the Tag filter
     if (computedMinScore) params.append("rating", computedMinScore);
     if (prefs.year) params.append("year", prefs.year);
     if (prefs.format) params.append("format", prefs.format);
@@ -2083,6 +2345,7 @@ function writeFiltersToHash(prefs) {
     if (prefs.search) params.set("q", prefs.search);
     prefs.moods.forEach(m => params.append("mood", m));
     prefs.genres.forEach(g => params.append("genre", g));
+    prefs.tags.forEach(t => params.append("tag", t));
     if (prefs.rating) params.append("rating", prefs.rating);
     if (prefs.year) params.append("year", prefs.year);
     if (prefs.format) params.append("format", prefs.format);
@@ -2117,6 +2380,7 @@ function restoreFiltersFromHash() {
 
     params.getAll("mood").forEach(value => tick("mood", value));
     params.getAll("genre").forEach(value => tick("genre", value));
+    const wantedTags = params.getAll("tag").slice(0, MAX_TAGS_SELECTED);
     ["rating", "year", "format", "language"].forEach(name => {
         const value = params.get(name);
         if (value) tick(name, value);
@@ -2127,6 +2391,17 @@ function restoreFiltersFromHash() {
         homeSearchInput.value = search.slice(0, 80);
         updateHomeSearchClear();
         applied = true;
+    }
+
+    if (wantedTags.length > 0) {
+        // The tag list loads from the server, so wait for it before ticking tags and searching
+        tagsReady.then(() => {
+            wantedTags.forEach(value => tick("tags", value));
+            updateFilterActiveStates();
+            fetchRecommendations({ scroll: false });
+        });
+        updateFilterActiveStates();
+        return true;
     }
 
     if (applied) {
@@ -2144,6 +2419,7 @@ window.addEventListener("hashchange", () => {
             if (input.type === "radio") input.dataset.wasChecked = "false";
         });
         if (homeSearchInput) homeSearchInput.value = "";
+        resetTagSearch();
         updateHomeSearchClear();
         clearTimeout(homeSearchSuggestTimer);
         hideHomeSearchSuggest();

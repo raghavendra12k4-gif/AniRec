@@ -1,0 +1,128 @@
+/* =========================================================
+   filters-extra.css - styles for the searchable Tag filter.
+   Loaded after style.css (see index.html) and built only from the
+   tokens defined at the top of style.css (surfaces, --accent, radii).
+========================================================= */
+
+/* The tag menu is wider than the other dropdowns because tag names are long */
+.filter-tag .filter-menu.tag-menu {
+    width: 340px;
+    max-width: calc(100vw - 24px);
+    max-height: min(430px, 65vh);
+    padding: 0 10px 10px;
+    overscroll-behavior: contain;
+}
+
+/* Search box + chips stay pinned at the top while the list scrolls */
+.tag-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 -10px;
+    padding: 10px 10px 8px;
+    background: var(--surface-3);
+    border-bottom: 1px solid var(--border);
+}
+
+.tag-search { position: relative; }
+
+.tag-search-icon {
+    position: absolute;
+    left: 11px;
+    top: 11px;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+
+.tag-search-input {
+    width: 100%;
+    height: 38px;
+    padding: 0 34px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
+}
+.tag-search-input::placeholder { color: var(--muted); }
+.tag-search-input:focus {
+    outline: none;
+    background: var(--surface-1);
+    border-color: var(--accent-line);
+    box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+.tag-search-clear {
+    position: absolute;
+    right: 3px;
+    top: 3px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: var(--r-sm);
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+.tag-search-clear:hover { color: #fff; }
+
+/* Picked tags */
+.tag-selected {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    max-height: 84px;
+    overflow-y: auto;
+}
+
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 4px 11px;
+    background: var(--accent-tint);
+    border: 1px solid var(--accent-line);
+    border-radius: 999px;
+    color: var(--accent-soft);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--ease), color var(--ease);
+}
+.tag-chip:hover { background: rgba(214, 141, 86, 0.26); color: #fff; }
+.tag-chip-x { font-size: 15px; line-height: 1; opacity: 0.8; }
+.tag-limit-note { font-size: 11px; color: var(--muted); }
+
+/* The list */
+.tag-group-title {
+    padding: 14px 10px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.tag-group:first-child .tag-group-title { padding-top: 10px; }
+
+.tag-option.is-locked { opacity: 0.4; cursor: not-allowed; }
+.tag-option.is-locked input { cursor: not-allowed; }
+
+.tag-status {
+    padding: 18px 10px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted);
+}

@@ -1389,12 +1389,51 @@ async function fetchRandomAnimePage(variables, isFilteringUserList, extraPages =
     return results.length > 0 ? results : (initialData?.Page?.media || []);
 }
 
+/* =========================================================
+   [ADDED] GET ALL AniList TAGS (feeds the searchable Tag filter)
+   Cached for a day on the server; adult and general-spoiler tags are left out.
+========================================================= */
+const tagCollectionQuery = `
+    query {
+        MediaTagCollection {
+            name
+            category
+            description
+            isAdult
+            isGeneralSpoiler
+        }
+    }
+`;
+
+app.get("/api/tags", async (req, res) => {
+    try {
+        const tags = await cached("tags:all", 24 * 60 * 60 * 1000, async () => {
+            const data = await anilistRequest(tagCollectionQuery, {});
+            const list = (data?.MediaTagCollection || [])
+                .filter(tag => tag && tag.name && !tag.isAdult && !tag.isGeneralSpoiler)
+                .map(tag => ({
+                    name: tag.name,
+                    category: tag.category || "Other",
+                    description: String(tag.description || "").slice(0, 140)
+                }));
+            // An empty answer is treated as a failure so it is never cached
+            if (list.length === 0) throw new Error("AniList returned no tags");
+            return list;
+        });
+        res.json(tags);
+    } catch (error) {
+        console.error("Tag list error:", error);
+        sendApiError(res, error, "Failed to load tags");
+    }
+});
+
 app.get("/api/anime", async (req, res) => {
     try {
         // [CHANGED] New optional params:
         //   moodGenre - genres that come from the selected MOODS (kept separate from genres the user ticked)
         //   exclude   - comma separated ids the user skipped/disliked on the frontend
-        const { search, genre, moodGenre, tag, rating, year, format, language, username, exclude, liked } = req.query;
+        const { search, genre, moodGenre, tag, userTag, rating, year, format, language, username, exclude, liked } = req.query;
+        // [ADDED] userTag = tags the user picked in the searchable Tag filter (kept apart from "tag", which comes from moods)
         // [ADDED] "liked" = ids the user saved / picked as favourites in the app (positive feedback for the recommender)
 
         const watchedIds = await getUserWatchedIds(username);
@@ -1461,6 +1500,18 @@ app.get("/api/anime", async (req, res) => {
                     attempts.push({ genres: unique([...explicitGenres, singleGenre]), tags: [], level: "relaxed" });
                 });
             }
+        }
+
+        // [ADDED] Tags picked in the Tag filter must survive every attempt: when a mood search is loosened, only the
+        // mood part is dropped. At most 5 tags (AniList wants a show to have ALL of them), clean strings only.
+        const userTags = unique(
+            toArray(userTag)
+                .filter(value => typeof value === "string")
+                .map(value => value.trim().slice(0, 60))
+                .filter(Boolean)
+        ).slice(0, 5);
+        if (userTags.length > 0) {
+            attempts.forEach(attempt => { attempt.tags = unique([...attempt.tags, ...userTags]); });
         }
 
         const isFilteringUserList = excludedIds.length > 0;
