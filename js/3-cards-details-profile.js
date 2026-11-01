@@ -22,9 +22,14 @@ function renderAnimeCards(list) {
         return;
     }
 
-    // [CHANGED] Every card now comes from the shared buildAnimeCard() so the whole site has the same card.
-    // showReason keeps the optional "Matches your taste for ..." line these results always had.
-    list.forEach(anime => container.appendChild(buildAnimeCard(anime, { showReason: true })));
+    appendAnimeCards(list, { showReason: true });
+}
+
+// Adds cards to the end of the results (used by infinite scroll)
+function appendAnimeCards(list, options = {}) {
+    const container = document.getElementById("animeResults");
+    if (!container || !list) return;
+    list.forEach(anime => container.appendChild(buildAnimeCard(anime, options)));
     refreshCardButtons();
 }
 
@@ -65,7 +70,8 @@ if (homeSearchClear) {
         homeSearchInput.value = "";
         updateHomeSearchClear();
         hideHomeSearchSuggest();
-        fetchRecommendations();
+        // Clearing the box with no filters left goes back to the popularity list
+        if (hasActiveFilters()) fetchRecommendations(); else { clearFiltersFromHash(); startBrowse(); }
         homeSearchInput.focus();
     });
 }
@@ -251,7 +257,7 @@ async function openAnimeModal(animeId) {
         const anime = await res.json();
 
         // Inside openAnimeModal(animeId), right after fetching `anime`:
-        const accentColor = anime.coverImage?.color || "#8b56b7";
+        const accentColor = anime.coverImage?.color || "#e16e2c";
         modalBody.style.setProperty("--modal-accent", accentColor);
 
         if (requestId !== modalRequestId) return null; // a newer modal request took over
@@ -683,24 +689,6 @@ function renderGenreBars(genres, totalAnime) {
     container.innerHTML = html;
 }
 
-// Genre Icon Mapping
-const genreIcons = {
-    "Action": "🔥",
-    "Psychological": "🧠",
-    "Fantasy": "⚔️",
-    "Romance": "❤️",
-    "Comedy": "😂",
-    "Drama": "🎭",
-    "Slice of Life": "🍃",
-    "Sci-Fi": "🚀",
-    "Horror": "💀",
-    "Mystery": "🔍",
-    "Mahou Shoujo": "✨",
-    "Sports": "⚽",
-    "Thriller": "🔪",
-    "Supernatural": "👻",
-    "Adventure": "🗺️"
-};
 
 // Generate dynamic narrative quote based on top genres
 function generateTasteNarrative(topGenres) {
@@ -757,11 +745,10 @@ function renderTasteProfile(genres, totalCount) {
     let badgeHtml = "";
     genres.slice(0, 5).forEach(item => {
         const percentage = totalCount > 0 ? Math.round((item.count / totalCount) * 100) : 0;
-        const icon = genreIcons[item.genre] || "🎬";
 
         badgeHtml += `
             <div class="taste-badge" title="${percentage}% of your list includes ${escapeHtml(item.genre)}">
-                <span>${icon} ${escapeHtml(item.genre)}</span>
+                <span>${escapeHtml(item.genre)}</span>
                 <strong>${percentage}%</strong>
             </div>
         `;

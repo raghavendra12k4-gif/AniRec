@@ -7,23 +7,24 @@
 ========================================================= */
 
 /* =========================================================
-   [ADDED] SIDEBAR SEARCH BUTTON: jump to the search bar in the Home filter section
+   SIDEBAR SEARCH BUTTON: opens the Search page (#/search) and puts the cursor in the search bar
+   (not on phones, where that would pop the keyboard up before you asked for it)
 ========================================================= */
 var pendingSearchFocus = false;
+var canHoverDevice = window.matchMedia("(hover: hover)").matches;
 
 function focusHomeSearch() {
     if (!homeSearchInput) return;
-    homeSearchInput.scrollIntoView({ behavior: "smooth", block: "center" });
     homeSearchInput.focus({ preventScroll: true });
 }
 
 document.getElementById("navSearchBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (getRoute() === "home") {
-        focusHomeSearch();
-    } else {
-        pendingSearchFocus = true;   // handleRoute() focuses the bar once Home is showing
-        location.hash = "#/";
+    if (getRoute() === "search") {
+        e.preventDefault();   // already here: just go back to the top of the page
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (canHoverDevice) focusHomeSearch();
+    } else if (canHoverDevice) {
+        pendingSearchFocus = true;   // handleRoute() focuses the bar once the Search page is showing
     }
 });
 
@@ -63,7 +64,7 @@ async function rollSurprise(mode) {
     empty.classList.add("hidden");
     card.classList.remove("hidden");
     card.style.removeProperty("--stage-accent");
-    card.innerHTML = `<div class="stage-loading"><span class="dice" aria-hidden="true">🎲</span><p>Rolling a ${escapeHtml(SURPRISE_MODES[mode] || "surprise")} pick…</p></div>`;
+    card.innerHTML = `<div class="stage-loading"><span class="dice" aria-hidden="true">${UI_ICONS.dice}</span><p>Rolling a ${escapeHtml(SURPRISE_MODES[mode] || "surprise")} pick…</p></div>`;
 
     try {
         const params = new URLSearchParams({ mode });
@@ -94,7 +95,7 @@ function showSurpriseAnime(anime, studioName, mode, remember) {
     const title = anime.title?.english || anime.title?.romaji || "Untitled";
     const cover = anime.coverImage?.extraLarge || anime.coverImage?.large || "";
     const meta = [
-        anime.averageScore ? `⭐ ${anime.averageScore}%` : null,
+        anime.averageScore ? `★ ${anime.averageScore}%` : null,
         anime.format ? String(anime.format).replace("_", " ") : null,
         anime.seasonYear || null,
         anime.episodes ? `${anime.episodes} eps` : null,
@@ -104,7 +105,7 @@ function showSurpriseAnime(anime, studioName, mode, remember) {
     const plain = String(anime.description || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
     const short = plain.length > 360 ? plain.slice(0, 360).replace(/\s+\S*$/, "") + "…" : (plain || "No description available.");
 
-    card.style.setProperty("--stage-accent", anime.coverImage?.color || "#8b56b7");
+    card.style.setProperty("--stage-accent", anime.coverImage?.color || "#e16e2c");
     card.innerHTML = `
         <div class="stage-bg"></div>
         <div class="stage-body">
@@ -116,9 +117,9 @@ function showSurpriseAnime(anime, studioName, mode, remember) {
                 <div class="stage-genres">${(anime.genres || []).slice(0, 4).map(g => `<span>${escapeHtml(g)}</span>`).join("")}</div>
                 <p class="stage-desc">${escapeHtml(short)}</p>
                 <div class="stage-actions">
-                    <button type="button" class="stage-btn like" data-act="like">${isSaved(anime.id) ? "✓ Saved" : "👍 I'm interested"}</button>
-                    <button type="button" class="stage-btn skip" data-act="skip">👎 Skip</button>
-                    <button type="button" class="stage-btn roll" data-act="roll">🎲 Roll again</button>
+                    <button type="button" class="stage-btn like" data-act="like">${isSaved(anime.id) ? `${UI_ICONS.check}Saved` : `${UI_ICONS.thumbUp}I'm interested`}</button>
+                    <button type="button" class="stage-btn skip" data-act="skip">${UI_ICONS.thumbDown}Skip</button>
+                    <button type="button" class="stage-btn roll" data-act="roll">${UI_ICONS.dice}Roll again</button>
                     <button type="button" class="stage-btn ghost" data-act="details">Details</button>
                 </div>
             </div>
@@ -171,8 +172,8 @@ document.getElementById("surpriseCard")?.addEventListener("click", (e) => {
         if (isSaved(anime.id)) { showToast("Already in Saved For Later"); return; }
         saveAnime(anime);
         renderSavedRow();
-        btn.textContent = "✓ Saved";
-        showToast("Saved for later ♥");
+        btn.innerHTML = `${UI_ICONS.check}Saved`;
+        showToast("Saved for later");
     } else if (btn.dataset.act === "skip") {
         addDislikedId(anime.id);                // never suggested again anywhere
         removeSaved(anime.id);
@@ -197,22 +198,22 @@ function removeDislikedId(id) {
 }
 
 var LIST_DEFS = [
-    { key: "saved", group: "On this device", name: "Saved For Later", icon: "🔖",
+    { key: "saved", group: "On this device", name: "Saved For Later", icon: UI_ICONS.bookmark,
       sub: "Shows you bookmarked to get to later.",
       empty: "Nothing saved yet. Use “Save” in a details window, or “I'm interested” on the Surprise page.",
       itemAction: { act: "remove-saved", label: "Remove", danger: true }, bulk: "Clear all" },
-    { key: "favourites", group: "On this device", name: "Favourites", icon: "❤️",
+    { key: "favourites", group: "On this device", name: "Favourites", icon: UI_ICONS.heart,
       sub: "Shows you told the recommender you love (Profile → Teach me your taste).",
       empty: "No favourites yet. Add some in Profile → Teach me your taste.",
       itemAction: { act: "remove-favourite", label: "Remove", danger: true } },
-    { key: "skipped", group: "On this device", name: "Skipped", icon: "🚫",
+    { key: "skipped", group: "On this device", name: "Skipped", icon: UI_ICONS.ban,
       sub: "Hidden from every suggestion. Restore any you changed your mind about.",
       empty: "You haven't skipped anything.",
       itemAction: { act: "restore", label: "Restore" }, bulk: "Restore all" },
-    { key: "CURRENT", group: "AniList", anilist: true, name: "Watching", icon: "▶️", sub: "What you're watching right now.", empty: "Nothing in this list." },
-    { key: "PLANNING", group: "AniList", anilist: true, name: "Plan to Watch", icon: "🗓️", sub: "Your AniList planning list.", empty: "Nothing in this list." },
-    { key: "COMPLETED", group: "AniList", anilist: true, name: "Completed", icon: "✅", sub: "Finished shows.", empty: "Nothing in this list." },
-    { key: "DROPPED", group: "AniList", anilist: true, name: "Dropped", icon: "⏹️", sub: "Shows you stopped watching.", empty: "Nothing in this list." }
+    { key: "CURRENT", group: "AniList", anilist: true, name: "Watching", icon: UI_ICONS.play, sub: "What you're watching right now.", empty: "Nothing in this list." },
+    { key: "PLANNING", group: "AniList", anilist: true, name: "Plan to Watch", icon: UI_ICONS.calendar, sub: "Your AniList planning list.", empty: "Nothing in this list." },
+    { key: "COMPLETED", group: "AniList", anilist: true, name: "Completed", icon: UI_ICONS.check, sub: "Finished shows.", empty: "Nothing in this list." },
+    { key: "DROPPED", group: "AniList", anilist: true, name: "Dropped", icon: UI_ICONS.stop, sub: "Shows you stopped watching.", empty: "Nothing in this list." }
 ];
 var activeListKey = "saved";
 var listFilterText = "";
@@ -247,7 +248,7 @@ function cardToListItem(anime) {
         id: anime.id,
         title: anime.title?.english || anime.title?.romaji || "Untitled",
         cover: anime.coverImage?.extraLarge || anime.coverImage?.large || "",
-        meta: [anime.averageScore ? `⭐ ${anime.averageScore}%` : null, (anime.genres || []).slice(0, 3).join(", ") || null, format || null].filter(Boolean).join(" · "),
+        meta: [anime.averageScore ? `★ ${anime.averageScore}%` : null, (anime.genres || []).slice(0, 3).join(", ") || null, format || null].filter(Boolean).join(" · "),
         extra: ""
     };
 }
@@ -393,13 +394,14 @@ document.getElementById("listFilterInput")?.addEventListener("input", (e) => {
 });
 
 /* =========================================================
-   ANI-REC: PAGE ROUTER (#/ = Home, #/discover = Discover)
+   ANI-REC: PAGE ROUTER (#/ = Home, #/search = Search, #/discover = Discover)
 ========================================================= */
 
 const homeView = document.getElementById("homeView");
 const discoverView = document.getElementById("discoverView");
 const surpriseView = document.getElementById("surpriseView");
 const listsView = document.getElementById("listsView");
+const searchView = document.getElementById("searchView");
 const routeLinks = document.querySelectorAll(".nav-links a[data-route]");
 const appHeader = document.querySelector("header");
 
@@ -410,8 +412,9 @@ function updateHeaderOnScroll() {
 window.addEventListener("scroll", updateHeaderOnScroll, { passive: true });
 
 function getRoute() {
-    // [CHANGED] Ignore anything after "?" so "#/?genre=Action" (shareable filters) still counts as the home route
+    // Ignore anything after "?" so "#/search?genre=Action" (shareable filters) still counts as the Search page
     const path = location.hash.split("?")[0];
+    if (path === "#/search") return "search";
     if (path === "#/discover") return "discover";
     if (path === "#/surprise") return "surprise";
     if (path === "#/lists") return "lists";
@@ -421,16 +424,20 @@ function getRoute() {
 function handleRoute() {
     const route = getRoute();
     homeView.classList.toggle("hidden", route !== "home");
+    searchView.classList.toggle("hidden", route !== "search");
     discoverView.classList.toggle("hidden", route !== "discover");
     surpriseView.classList.toggle("hidden", route !== "surprise");
     listsView.classList.toggle("hidden", route !== "lists");
     routeLinks.forEach(a => a.classList.toggle("active", a.dataset.route === route));
     window.scrollTo(0, 0);
     updateHeaderOnScroll();
+    if (route === "home") loadHome();
+    setHeroActive(route === "home");
+    if (route === "search") ensureSearchStarted();
     if (route === "discover") loadDiscover();
     if (route === "lists") renderListsPage();
     refreshCardButtons(); // [ADDED] cards on the page we return to may be out of date (saved / favourites changed on the Lists page)
-    if (route === "home" && pendingSearchFocus) {
+    if (route === "search" && pendingSearchFocus) {
         pendingSearchFocus = false;
         requestAnimationFrame(focusHomeSearch);
     }
@@ -438,8 +445,13 @@ function handleRoute() {
 
 window.addEventListener("hashchange", handleRoute);
 
+// Old shared links looked like "#/?genre=Action"; filters now live on the Search page, so send them there
+if (location.hash.startsWith("#/?")) {
+    history.replaceState(null, "", "#/search" + location.hash.slice(2));
+}
+
 // Initial render
 handleRoute();
 renderContinueWatching();
 renderSavedRow();          // [ADDED] show the Saved For Later section if anything is saved
-restoreFiltersFromHash();  // [ADDED] if the URL contains filters (#/?genre=...), apply them and search
+restoreFiltersFromHash();  // if the URL contains filters (#/search?genre=...), apply them and search

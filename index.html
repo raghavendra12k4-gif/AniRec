@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- [ADDED] Colours the phone browser's address bar to match the app -->
-    <meta name="theme-color" content="#0d0f11">
-    <title>Anime Recommendation Dashboard</title>
-    <!-- [ADDED] Emoji favicon (inline SVG data URI, so no extra image file is needed) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+    <meta name="theme-color" content="#0d0a09">
+    <title>AniRec: find your next anime</title>
+    <meta name="description" content="AniRec picks anime that fit your taste. Browse by popularity, filter by mood, genre and tag, and get recommendations from your AniList.">
+    <!-- Favicon: the AniRec diamond (inline SVG, no extra file needed) -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f25e38'/%3E%3Cstop offset='1' stop-color='%23fe963d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M32 3 61 32 32 61 3 32Z' fill='url(%23g)'/%3E%3Cpath d='M20 28h24L32 42Z' fill='%23fff'/%3E%3C/svg%3E">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,7 +30,7 @@
                     <img src="assets/AniRec-Logo.png" alt="AniRec-icon">
                 </li>
                 <li class="nav-search-item">
-                    <a href="#/" id="navSearchBtn" aria-label="Search anime">
+                    <a href="#/search" id="navSearchBtn" data-route="search" aria-label="Search anime">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
                         <span>Search</span>
                     </a>
@@ -76,10 +77,55 @@
         </div>
     </header>
 
+    <!-- HOME: a big featured banner, then Continue Watching and a few hand-picked rows -->
     <main id="homeView">
+    <h1 class="sr-only">AniRec: find your next anime</h1>
+
+    <section class="hero is-loading" id="hero" aria-label="Featured anime">
+        <div class="hero-track" id="heroTrack"></div>
+        <div class="hero-ui hidden" id="heroUi">
+            <button class="hero-nav hero-prev" id="heroPrev" type="button" aria-label="Previous featured anime"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7"/></svg></button>
+            <div class="hero-dots" id="heroDots"></div>
+            <button class="hero-nav hero-next" id="heroNext" type="button" aria-label="Next featured anime"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7"/></svg></button>
+        </div>
+    </section>
+
+    <section class="home-section continue-sec" id="continueSection">
+        <div class="row-header">
+            <h2>Continue Watching</h2>
+            <span class="row-sub">Pick up right where you left off</span>
+        </div>
+        <div class="row-scroller" id="continueRow"></div>
+    </section>
+
+    <!-- Editorial collection: one hand-picked list at a time, swapped every 3 days (filled by loadCollection()) -->
+    <section class="home-section hidden" id="collectionSection">
+        <div class="row-header row-header-split">
+            <div>
+                <p class="eyebrow">Editorial pick</p>
+                <h2 id="collectionTitle">Collection</h2>
+                <span class="row-sub" id="collectionBlurb"></span>
+            </div>
+            <span class="collection-timer" id="collectionTimer"></span>
+        </div>
+        <div class="row-scroller" id="collectionRow"></div>
+    </section>
+
+    <section class="home-section" id="topRatedSection">
+        <div class="row-header">
+            <h2>Top Rated</h2>
+            <span class="row-sub">Loved by a lot of people. Already-watched shows are left out.</span>
+        </div>
+        <div class="row-scroller" id="topRatedRow"></div>
+    </section>
+    </main>
+
+    <!-- SEARCH PAGE: the search bar + all filters. Before any filters are used it lists every anime on AniList by
+         popularity (10 at a time as you scroll); after Apply it shows up to 20 personal picks, also 10 at a time. -->
+    <main id="searchView" class="hidden">
     <section class="page-head">
-        <h1>Find Your <span>Next Watch</span></h1>
-        <p>Search for an anime, then refine your results with filters.</p>
+        <h1>Find <span>Anything</span></h1>
+        <p>Search every anime on AniList, then narrow it down with filters.</p>
     </section>
 
     <section class="filter-sec" id="filterSec">
@@ -116,19 +162,19 @@
             <div class="filter" data-filter-name="Mood">
                 <label class="filter-label">Mood</label>
                 <button class="filter-btn" data-filter-name="Mood" type="button">
-                    <span class="btn-txt">🎭 Mood</span>
+                    <span class="btn-txt">Mood</span>
                     <svg height="20" width="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false" class="arrow-btn" fill="rgb(143 140 140)">
                         <path d="M4.516 7.548c0.436-0.446 1.043-0.481 1.576 0l3.908 3.747 3.908-3.747c0.533-0.481 1.141-0.446 1.574 0 0.436 0.445 0.408 1.197 0 1.615-0.406 0.418-4.695 4.502-4.695 4.502-0.217 0.223-0.502 0.335-0.787 0.335s-0.57-0.112-0.789-0.335c0 0-4.287-4.084-4.695-4.502s-0.436-1.17 0-1.615z"></path>
                     </svg>
                 </button>
                 <div class="filter-menu">
-                    <label><input type="checkbox" name="mood" value="relaxing"> 😌 Relaxing</label>
-                    <label><input type="checkbox" name="mood" value="intense"> 🔥 Intense</label>
-                    <label><input type="checkbox" name="mood" value="emotional"> 😭 Emotional</label>
-                    <label><input type="checkbox" name="mood" value="thought-provoking"> 🧠 Thought-Provoking</label>
-                    <label><input type="checkbox" name="mood" value="funny"> 😂 Funny</label>
-                    <label><input type="checkbox" name="mood" value="disturbing"> 💀 Disturbing</label>
-                    <label><input type="checkbox" name="mood" value="romance"> ❤️ Romance</label>
+                    <label><input type="checkbox" name="mood" value="relaxing"> Relaxing</label>
+                    <label><input type="checkbox" name="mood" value="intense"> Intense</label>
+                    <label><input type="checkbox" name="mood" value="emotional"> Emotional</label>
+                    <label><input type="checkbox" name="mood" value="thought-provoking"> Thought-Provoking</label>
+                    <label><input type="checkbox" name="mood" value="funny"> Funny</label>
+                    <label><input type="checkbox" name="mood" value="disturbing"> Disturbing</label>
+                    <label><input type="checkbox" name="mood" value="romance"> Romance</label>
                 </div>
             </div>
 
@@ -279,26 +325,27 @@
         </div>
     </section>
 
-    <section class="result-sec hidden" id="resultSection">
-        <h2 id="resultsTitle">Your Recommendations</h2>
-        <p class="sec-sub" id="resultsSubtitle">Matched to your filters and the shows you rate highly</p>
-    <!-- [ADDED] Shown when the server had to loosen the mood/genre combination to find results -->
-    <p class="results-note hidden" id="resultsNote"></p>
-    <div class="anime-results" id="animeResults"></div>
-    <!-- [ADDED] "Show more" reveals the rest of the fetched results; "Roll again" re-runs the same filters for a fresh set -->
-    <div class="results-actions hidden" id="resultsActions">
-        <button type="button" class="results-action-btn" id="showMoreBtn">Show more</button>
-        <button type="button" class="results-action-btn" id="rerollBtn">🎲 Roll again</button>
-    </div>
-</section>
+    <section class="result-sec" id="resultSection">
+        <div class="results-head">
+            <div class="results-head-text">
+                <h2 id="resultsTitle">Popular on AniList</h2>
+                <p class="sec-sub" id="resultsSubtitle">Most popular first. Shows already on your AniList are left out.</p>
+            </div>
+            <button type="button" class="results-action-btn hidden" id="rerollBtn"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="0.9"/><circle cx="15" cy="9" r="0.9"/><circle cx="12" cy="12" r="0.9"/><circle cx="9" cy="15" r="0.9"/><circle cx="15" cy="15" r="0.9"/></svg><span>Roll again</span></button>
+        </div>
+        <!-- Shown when the server had to loosen the mood/genre combination to find results -->
+        <p class="results-note hidden" id="resultsNote"></p>
+        <div class="anime-results" id="animeResults"></div>
+        <!-- Infinite scroll: when this empty marker comes near the screen, the next 10 results are added -->
+        <div class="results-status" id="resultsStatus" aria-live="polite"></div>
+        <div class="results-sentinel" id="resultsSentinel" aria-hidden="true"></div>
+        <div class="results-end hidden" id="resultsEnd">
+            <p id="resultsEndText"></p>
+            <button type="button" class="results-action-btn" id="rerollEndBtn"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="0.9"/><circle cx="15" cy="9" r="0.9"/><circle cx="12" cy="12" r="0.9"/><circle cx="9" cy="15" r="0.9"/><circle cx="15" cy="15" r="0.9"/></svg><span>Roll again</span></button>
+        </div>
+    </section>
+    </main>
 
-<section class="continue-sec" id="continueSection">
-    <h2>Continue Watching</h2>
-    <p class="sec-sub">Pick up right where you left off</p>
-    <div class="anime-results" id="continueRow"></div>
-</section>
-
-</main>
 
 <main id="discoverView" class="hidden">
     <section class="page-head">
@@ -306,22 +353,22 @@
         <p>Fresh ways to find your next watch.</p>
     </section>
 
-    <section class="discover-row" id="trendingSection">
+    <section class="discover-row" id="airingSection">
         <div class="row-header">
-            <h2>🔥 Trending Right Now</h2>
-            <span class="row-sub">What the community is watching this very moment</span>
+            <h2><svg class="h-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/></svg>Airing This Season</h2>
+            <span class="row-sub">What is on right now, most popular first</span>
         </div>
-        <div class="row-scroller" id="trendingRow"></div>
+        <div class="row-scroller" id="airingRow"></div>
     </section>
 
     <!-- [ADDED] PERSONALISED ROWS (filled by loadPersonalRows() in app.js) -->
     <section class="discover-row" id="tasteSection">
         <div class="row-header row-header-split">
             <div>
-                <h2>✨ Based on Your Taste</h2>
+                <h2><svg class="h-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16v4M17 18h4"/></svg>Based on Your Taste</h2>
                 <span class="row-sub">Ranked by how closely they match what you rate highly</span>
             </div>
-            <button type="button" id="tasteShuffleBtn" class="row-action-btn" title="Show a fresh set of picks">↻ Shuffle</button>
+            <button type="button" id="tasteShuffleBtn" class="row-action-btn" title="Show a fresh set of picks"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg><span>Shuffle</span></button>
         </div>
         <div class="row-scroller" id="tasteRow"></div>
     </section>
@@ -329,7 +376,7 @@
     <!-- BECAUSE I LIKED...: type a show, get shows like it that also fit your profile -->
     <section class="discover-row because-search" id="becauseSearchSection">
         <div class="row-header">
-            <h2>🎯 Because I liked…</h2>
+            <h2><svg class="h-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8"/></svg>Because I liked…</h2>
             <span class="row-sub">Type a show you love and we'll find similar ones. Not feeling them? Hit Reshuffle for different picks.</span>
         </div>
         <div class="search-box">
@@ -342,7 +389,7 @@
         <div id="becauseSearchResult" class="hidden">
             <div class="because-heading-row">
                 <p class="because-heading" id="becauseSearchTitle"></p>
-                <button type="button" id="becauseShuffleBtn" class="row-action-btn" title="Show different picks for this show">↻ Reshuffle</button>
+                <button type="button" id="becauseShuffleBtn" class="row-action-btn" title="Show different picks for this show"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg><span>Reshuffle</span></button>
             </div>
             <div class="row-scroller" id="becauseSearchRow"></div>
         </div>
@@ -361,22 +408,22 @@
 
     <section class="surprise-modes" role="radiogroup" aria-label="Surprise mode">
         <button type="button" class="surprise-mode" data-mode="wildcard" role="radio" aria-checked="false">
-            <span class="mode-icon" aria-hidden="true">💀</span>
+            <span class="mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></span>
             <span class="mode-name">Wildcard</span>
             <span class="mode-desc">Anything goes. Pure chaos.</span>
         </button>
         <button type="button" class="surprise-mode" data-mode="hidden-gem" role="radio" aria-checked="false">
-            <span class="mode-icon" aria-hidden="true">💎</span>
+            <span class="mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M8 3l4 6 4-6M12 9v12"/></svg></span>
             <span class="mode-name">Hidden Gems</span>
             <span class="mode-desc">Highly rated, flying under the radar.</span>
         </button>
         <button type="button" class="surprise-mode" data-mode="time-capsule" role="radio" aria-checked="false">
-            <span class="mode-icon" aria-hidden="true">⏳</span>
+            <span class="mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
             <span class="mode-name">Time Capsule</span>
             <span class="mode-desc">Classics from the 90s and 2000s.</span>
         </button>
         <button type="button" class="surprise-mode" data-mode="studio-spotlight" role="radio" aria-checked="false">
-            <span class="mode-icon" aria-hidden="true">🏆</span>
+            <span class="mode-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.4l-5.4 3.1 1.2-6L3.3 9.3l6.1-.7z"/></svg></span>
             <span class="mode-name">Studio Spotlight</span>
             <span class="mode-desc">A great pick from one studio's catalogue.</span>
         </button>
@@ -384,7 +431,7 @@
 
     <section class="surprise-stage" aria-live="polite">
         <div class="stage-empty" id="surpriseEmpty">
-            <span aria-hidden="true">🎲</span>
+            <svg class="stage-dice" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="0.9"/><circle cx="15" cy="9" r="0.9"/><circle cx="12" cy="12" r="0.9"/><circle cx="9" cy="15" r="0.9"/><circle cx="15" cy="15" r="0.9"/></svg>
             <p>Choose a mode above to roll your first pick.</p>
         </div>
         <article class="stage-card hidden" id="surpriseCard"></article>
@@ -503,7 +550,7 @@
 
                     <!-- Generated Analysis Narrative -->
                     <div class="taste-quote-box">
-                        <span class="quote-icon">💡</span>
+                        <span class="quote-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg></span>
                         <p id="tasteSummaryText" class="taste-summary">
                             Analyzing your anime preferences...
                         </p>
@@ -547,6 +594,10 @@
             </div>
         </div>
     </div>
+
+        <footer class="site-footer">
+        <p><strong>AniRec</strong> finds anime that fit your taste. Anime data and artwork come from <a href="https://anilist.co" target="_blank" rel="noopener noreferrer">AniList</a>. Connecting only uses your public AniList username, never a password. AniRec is a fan project and is not affiliated with AniList.</p>
+    </footer>
 
     <!-- App code: 5 files, loaded in this order (they share one scope, so file 5 must be last) -->
     <script src="js/1-core.js"></script>

@@ -357,6 +357,8 @@ function toCardMedia(media, reason) {
         averageScore: media.averageScore,
         genres: media.genres,
         coverImage: media.coverImage,
+        bannerImage: media.bannerImage ?? null,   // [ADDED] wide artwork for the Home hero
+        popularity: media.popularity ?? null,
         // [ADDED] fields the redesigned cards show: status badge, "year • format • episodes", synopsis, trailer button
         status: media.status ?? null,
         format: media.format ?? null,
@@ -2361,6 +2363,345 @@ app.get("/api/trending", async (req, res) => {
     } catch (error) {
         console.error("Trending API error:", error);
         sendApiError(res, error, "Failed to fetch trending anime.");
+    }
+});
+
+/* =========================================================
+   [ADDED] HOME + SEARCH PAGE ENDPOINTS
+   /api/browse              every anime on AniList by popularity (Search page, 10 at a time, skips your list)
+   /api/hero                the 10 fastest-rising shows with wide artwork (Home hero, skips your list)
+   /api/top-rated           top rated shows people actually watch (Home row, skips your list)
+   /api/airing              what is airing this season (Discover row, skips your list)
+   /api/collections/current the editorial collection of the moment (changes every 3 days)
+========================================================= */
+
+const CARD_MEDIA_FIELDS = `
+    id
+    title { romaji english }
+    averageScore
+    popularity
+    genres
+    coverImage { extraLarge color }
+    bannerImage
+    format
+    episodes
+    seasonYear
+    startDate { year month }
+    status
+    description(asHtml: false)
+    trailer { id site }
+    nextAiringEpisode { episode }
+`;
+
+const WATCHABLE_FORMATS = "[TV, TV_SHORT, MOVIE, ONA, OVA]";
+
+// ---- Search page: everything, most popular first, 10 per page ----
+const browseQuery = `
+    query ($page: Int, $perPage: Int, $excludedIds: [Int]) {
+        Page(page: $page, perPage: $perPage) {
+            pageInfo { hasNextPage }
+            media(
+                type: ANIME,
+                isAdult: false,
+                format_in: ${WATCHABLE_FORMATS},
+                id_not_in: $excludedIds,
+                sort: POPULARITY_DESC
+            ) {
+                ${CARD_MEDIA_FIELDS}
+            }
+        }
+    }
+`;
+
+app.get("/api/browse", async (req, res) => {
+    try {
+        const page = Math.min(Math.max(parseInt(req.query.page, 10) || 1, 1), 300);
+        const perPage = Math.min(Math.max(parseInt(req.query.perPage, 10) || 10, 1), 20);
+        const username = normalizeUsername(req.query.username);
+        const skipped = parseIdList(req.query.exclude, 300);   // shows skipped with the thumbs-down button
+        const key = `browse:${(username || "anon").toLowerCase()}:${page}:${perPage}:${skipped.join(",")}`;
+
+        const result = await cached(key, 10 * 60 * 1000, async () => {
+            const watched = await getUserWatchedIds(username);
+            const excludedIds = mergeIds(watched, skipped);
+            const data = await anilistRequest(browseQuery, {
+                page,
+                perPage,
+                excludedIds: excludedIds.length > 0 ? excludedIds : undefined
+            });
+            return {
+                items: (data?.Page?.media || []).map(media => toCardMedia(media, null)),
+                hasNextPage: Boolean(data?.Page?.pageInfo?.hasNextPage)
+            };
+        });
+
+        res.json(result);
+    } catch (error) {
+        console.error("Browse API error:", error);
+        sendApiError(res, error, "Failed to load anime.");
+    }
+});
+
+// ---- Home hero: the 10 fastest-rising shows, preferring ones that have wide artwork ----
+const heroQuery = `
+    query ($excludedIds: [Int]) {
+        Page(page: 1, perPage: 40) {
+            media(
+                type: ANIME,
+                isAdult: false,
+                format_in: [TV, TV_SHORT, MOVIE, ONA],
+                id_not_in: $excludedIds,
+                sort: TRENDING_DESC
+            ) {
+                ${CARD_MEDIA_FIELDS}
+            }
+        }
+    }
+`;
+
+app.get("/api/hero", async (req, res) => {
+    try {
+        const username = normalizeUsername(req.query.username);
+        const key = `hero:${(username || "anon").toLowerCase()}`;
+
+        const result = await cached(key, 10 * 60 * 1000, async () => {
+            const excludedIds = await getUserWatchedIds(username);
+            const data = await anilistRequest(heroQuery, {
+                excludedIds: excludedIds.length > 0 ? excludedIds : undefined
+            });
+            const media = data?.Page?.media || [];
+            const withBanner = media.filter(item => item.bannerImage);
+            const withoutBanner = media.filter(item => !item.bannerImage);
+            // Wide artwork first; only fill up with cover-only shows when too few have banners
+            const picked = withBanner.length >= 6 ? withBanner : [...withBanner, ...withoutBanner];
+            return picked.slice(0, 10).map(item => toCardMedia(item, null));
+        });
+
+        res.json(result);
+    } catch (error) {
+        console.error("Hero API error:", error);
+        sendApiError(res, error, "Failed to load featured anime.");
+    }
+});
+
+// ---- Home row: top rated shows that enough people have watched to trust the score ----
+const topRatedQuery = `
+    query ($excludedIds: [Int]) {
+        Page(page: 1, perPage: 20) {
+            media(
+                type: ANIME,
+                isAdult: false,
+                format_in: ${WATCHABLE_FORMATS},
+                status_not: NOT_YET_RELEASED,
+                popularity_greater: 40000,
+                id_not_in: $excludedIds,
+                sort: SCORE_DESC
+            ) {
+                ${CARD_MEDIA_FIELDS}
+            }
+        }
+    }
+`;
+
+app.get("/api/top-rated", async (req, res) => {
+    try {
+        const username = normalizeUsername(req.query.username);
+        const key = `toprated:${(username || "anon").toLowerCase()}`;
+
+        const result = await cached(key, 30 * 60 * 1000, async () => {
+            const excludedIds = await getUserWatchedIds(username);
+            const data = await anilistRequest(topRatedQuery, {
+                excludedIds: excludedIds.length > 0 ? excludedIds : undefined
+            });
+            return (data?.Page?.media || []).map(media => toCardMedia(media, null));
+        });
+
+        res.json(result);
+    } catch (error) {
+        console.error("Top rated API error:", error);
+        sendApiError(res, error, "Failed to load top rated anime.");
+    }
+});
+
+// ---- Discover row: airing this season ----
+function currentAnimeSeason(date = new Date()) {
+    const month = date.getUTCMonth();   // 0 = January
+    const season = month <= 2 ? "WINTER" : month <= 5 ? "SPRING" : month <= 8 ? "SUMMER" : "FALL";
+    return { season, year: date.getUTCFullYear() };
+}
+
+const airingQuery = `
+    query ($season: MediaSeason, $year: Int, $excludedIds: [Int]) {
+        Page(page: 1, perPage: 20) {
+            media(
+                type: ANIME,
+                isAdult: false,
+                season: $season,
+                seasonYear: $year,
+                format_in: [TV, TV_SHORT, ONA],
+                id_not_in: $excludedIds,
+                sort: POPULARITY_DESC
+            ) {
+                ${CARD_MEDIA_FIELDS}
+            }
+        }
+    }
+`;
+
+const airingFallbackQuery = `
+    query ($excludedIds: [Int]) {
+        Page(page: 1, perPage: 20) {
+            media(
+                type: ANIME,
+                isAdult: false,
+                status: RELEASING,
+                format_in: [TV, TV_SHORT, ONA],
+                id_not_in: $excludedIds,
+                sort: POPULARITY_DESC
+            ) {
+                ${CARD_MEDIA_FIELDS}
+            }
+        }
+    }
+`;
+
+app.get("/api/airing", async (req, res) => {
+    try {
+        const username = normalizeUsername(req.query.username);
+        const { season, year } = currentAnimeSeason();
+        const key = `airing:${(username || "anon").toLowerCase()}:${season}${year}`;
+
+        const result = await cached(key, 30 * 60 * 1000, async () => {
+            const excludedIds = await getUserWatchedIds(username);
+            const idVariable = excludedIds.length > 0 ? excludedIds : undefined;
+
+            let media = (await anilistRequest(airingQuery, { season, year, excludedIds: idVariable }))?.Page?.media || [];
+            // Early in a season AniList may have little tagged yet: fall back to "currently releasing"
+            if (media.length < 6) {
+                media = (await anilistRequest(airingFallbackQuery, { excludedIds: idVariable }))?.Page?.media || [];
+            }
+            return media.map(item => toCardMedia(item, null));
+        });
+
+        res.json(result);
+    } catch (error) {
+        console.error("Airing API error:", error);
+        sendApiError(res, error, "Failed to load this season's anime.");
+    }
+});
+
+// ---- Editorial collections: hand-picked lists, one shown at a time, swapped every 3 days ----
+// Each pick is [title to search for, first year (helps AniList find the right entry)].
+const COLLECTIONS = [
+    {
+        slug: "world-building",
+        title: "Anime with incredible world-building",
+        blurb: "Worlds with their own rules, history and weather. Easy to get lost in.",
+        picks: [
+            ["Made in Abyss", 2017], ["Fullmetal Alchemist: Brotherhood", 2009], ["Hunter x Hunter", 2011],
+            ["Delicious in Dungeon", 2024], ["Mushishi", 2005], ["Nausicaa of the Valley of the Wind", 1984],
+            ["Princess Mononoke", 1997], ["The Twelve Kingdoms", 2002], ["Kino's Journey", 2003],
+            ["Spice and Wolf", 2008], ["Frieren: Beyond Journey's End", 2023], ["The Ancient Magus' Bride", 2017]
+        ]
+    },
+    {
+        slug: "psychological",
+        title: "Best psychological anime",
+        blurb: "Minds under pressure. Slow burns that stay with you after the credits.",
+        picks: [
+            ["Monster", 2004], ["Death Note", 2006], ["Paranoia Agent", 2004], ["Serial Experiments Lain", 1998],
+            ["Perfect Blue", 1998], ["Neon Genesis Evangelion", 1995], ["Psycho-Pass", 2012],
+            ["Puella Magi Madoka Magica", 2011], ["Welcome to the N.H.K.", 2006], ["Kaiji: Ultimate Survivor", 2007],
+            ["Ergo Proxy", 2006], ["Terror in Resonance", 2014]
+        ]
+    },
+    {
+        slug: "soundtracks",
+        title: "Anime with unforgettable soundtracks",
+        blurb: "Turn the volume up. The music is half the story in these.",
+        picks: [
+            ["Cowboy Bebop", 1998], ["Samurai Champloo", 2004], ["Your Lie in April", 2014], ["Kids on the Slope", 2012],
+            ["Beck: Mongolian Chop Squad", 2004], ["Carole & Tuesday", 2019], ["Nana", 2006], ["Bocchi the Rock!", 2022],
+            ["Death Parade", 2015], ["Tengen Toppa Gurren Lagann", 2007], ["Violet Evergarden", 2018],
+            ["Ghost in the Shell: Stand Alone Complex", 2002]
+        ]
+    },
+    {
+        slug: "short-weekend",
+        title: "Short anime worth your weekend",
+        blurb: "One sitting, or two. Complete stories that respect your time.",
+        picks: [
+            ["Ping Pong the Animation", 2014], ["Devilman Crybaby", 2018], ["Haibane Renmei", 2002], ["Erased", 2016],
+            ["Odd Taxi", 2021], ["Kaiba", 2008], ["Sonny Boy", 2021], ["Cyberpunk: Edgerunners", 2022],
+            ["The Tatami Galaxy", 2010], ["Chainsaw Man", 2022], ["Yuri!!! on Ice", 2016], ["Wonder Egg Priority", 2021]
+        ]
+    },
+    {
+        slug: "unusual-storytelling",
+        title: "Anime with unusual storytelling",
+        blurb: "Stories that break the usual shape. Not for background viewing.",
+        picks: [
+            ["FLCL", 2000], ["Revolutionary Girl Utena", 1997], ["Mononoke", 2007], ["Texhnolyze", 2003],
+            ["Paprika", 2006], ["Mind Game", 2004], ["Boogiepop Phantom", 2000], ["Bakemonogatari", 2009],
+            ["Dorohedoro", 2020], ["From the New World", 2012], ["Kemonozume", 2006], ["Mawaru Penguindrum", 2011]
+        ]
+    }
+];
+
+const collectionPickQuery = `
+    query ($search: String, $yearLike: String) {
+        Page(page: 1, perPage: 3) {
+            media(type: ANIME, isAdult: false, search: $search, startDate_like: $yearLike, sort: SEARCH_MATCH) {
+                ${CARD_MEDIA_FIELDS}
+            }
+        }
+    }
+`;
+
+// Looks every pick up on AniList (4 at a time, to stay friendly to the rate limit). Cached for a week.
+async function resolveCollection(collection) {
+    return cached(`collection:${collection.slug}`, 7 * 24 * 60 * 60 * 1000, async () => {
+        const found = [];
+        for (let i = 0; i < collection.picks.length; i += 4) {
+            const chunk = collection.picks.slice(i, i + 4);
+            const settled = await Promise.allSettled(chunk.map(async ([search, year]) => {
+                let data = await anilistRequest(collectionPickQuery, { search, yearLike: `${year}%` });
+                let media = data?.Page?.media || [];
+                if (media.length === 0) {
+                    data = await anilistRequest(collectionPickQuery, { search });   // year hint was too strict
+                    media = data?.Page?.media || [];
+                }
+                return media[0] || null;
+            }));
+            settled.forEach(result => { if (result.status === "fulfilled" && result.value) found.push(result.value); });
+        }
+        const unique = [...new Map(found.map(media => [media.id, media])).values()];
+        if (unique.length < 6) throw new Error("Collection could not be resolved");   // never cache a broken collection
+        return unique.map(media => toCardMedia(media, null));
+    });
+}
+
+app.get("/api/collections/current", async (req, res) => {
+    try {
+        const dayNumber = Math.floor(Date.now() / 86400000);   // days since 1970 (UTC), the same for every visitor
+        const slot = Math.floor(dayNumber / 3);                // a new collection every 3 days
+        const collection = COLLECTIONS[slot % COLLECTIONS.length];
+        const daysLeft = 3 - (dayNumber % 3);
+
+        let items = await resolveCollection(collection);
+
+        // Hide shows already on the visitor's list, but never leave the row nearly empty
+        const username = normalizeUsername(req.query.username);
+        if (username) {
+            const watched = new Set(await getUserWatchedIds(username));
+            const fresh = items.filter(item => !watched.has(item.id));
+            if (fresh.length >= 6) items = fresh;
+        }
+
+        res.json({ slug: collection.slug, title: collection.title, blurb: collection.blurb, daysLeft, items });
+    } catch (error) {
+        console.error("Collection API error:", error);
+        sendApiError(res, error, "Failed to load the editorial collection.");
     }
 });
 

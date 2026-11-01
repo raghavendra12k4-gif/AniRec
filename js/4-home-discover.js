@@ -46,11 +46,17 @@ function renderContinueWatching() {
 
     const username = localStorage.getItem("anilist_username");
 
-    // 1. Not connected -> prompt
+    const section = document.getElementById("continueSection");
+    if (section) section.classList.toggle("is-guest", !username);
+
+    // 1. Not connected -> a calm banner that says what connecting does (and that no password is involved)
     if (!username) {
         row.innerHTML = `
-            <div class="continue-empty">
-                <p>Connect your AniList to see where you left off.</p>
+            <div class="connect-banner">
+                <div class="connect-banner-text">
+                    <strong>Connect your AniList</strong>
+                    <p>See where you left off and get picks that match your taste. Only your public username is used. No password, ever.</p>
+                </div>
                 <button type="button" id="continueConnectBtn" class="continue-cta">Connect AniList</button>
             </div>
         `;
@@ -62,7 +68,7 @@ function renderContinueWatching() {
 
     // 2. Connected, list still loading
     if (!watchlistLoaded) {
-        row.innerHTML = `<p class="continue-empty">Loading your list...</p>`;
+        showRowSkeleton("continueRow", 4);
         return;
     }
 
@@ -73,7 +79,7 @@ function renderContinueWatching() {
         .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
     if (entries.length === 0) {
-        row.innerHTML = `<p class="continue-empty">Nothing in progress. Hit Apply or try Surprise Me!</p>`;
+        row.innerHTML = `<p class="continue-empty">Nothing in progress yet. <a href="#/search">Browse everything</a> or try <a href="#/surprise">Surprise Me</a>.</p>`;
         return;
     }
 
@@ -91,7 +97,7 @@ function renderContinueWatching() {
         const card = document.createElement("div");
         card.className = "anime-card";
         card.dataset.animeId = media.id;
-        card.style.setProperty("--card-accent", media.coverImage?.color || "#8b56b7");
+        card.style.setProperty("--card-accent", media.coverImage?.color || "#e16e2c");
 
         // [CHANGED] Same card as everywhere else; the action row is the "Next episode" link and a progress bar shows where you are
         card.innerHTML = `
@@ -126,7 +132,14 @@ function renderContinueWatching() {
 function onUserChanged() {
     watchlistLoaded = false;
     renderContinueWatching();
+    homeLoadedFor = undefined;
+    if (getRoute() === "home") loadHome();
     if (getRoute() === "discover") loadDiscover();
+    // The popularity list on the Search page hides what is on your list, so it has to restart
+    if (resultsMode === "browse") {
+        searchStarted = false;
+        if (getRoute() === "search") ensureSearchStarted();
+    }
     refreshListsPage();
 }
 
@@ -148,7 +161,7 @@ function buildAnimeCard(anime, options = {}) {
     if (anime.reason) modalReasonHints.set(Number(anime.id), String(anime.reason));
 
     // Poster colour from AniList (falls back to the site's purple) -> used for the hover glow
-    card.style.setProperty("--card-accent", anime.coverImage?.color || "#8b56b7");
+    card.style.setProperty("--card-accent", anime.coverImage?.color || "#e16e2c");
 
     card.innerHTML = `
         ${cardPosterHTML(anime, title)}
@@ -220,7 +233,7 @@ function renderRow(rowId, list, emptyMessage, cardOptions = {}) {
 }
 
 /* =========================================================
-   ANI-REC: DISCOVER PAGE (Trending row)
+   ANI-REC: DISCOVER PAGE (Airing This Season row)
 ========================================================= */
 
 // undefined = nothing loaded yet; otherwise the username (or null) the rows were loaded for
@@ -238,27 +251,24 @@ async function fetchJson(url) {
     return body;
 }
 
-async function loadTrendingRow(username) {
+async function loadAiringRow(username) {
     const token = discoverToken;
-    showRowSkeleton("trendingRow");
+    showRowSkeleton("airingRow");
 
     try {
         const params = new URLSearchParams();
         if (username) params.append("username", username);
 
-        const res = await fetch(`${API_BASE_URL}/api/trending?${params.toString()}`);
-        if (!res.ok) throw new Error("Trending request failed");
-
-        const list = await res.json();
+        const list = await fetchJson(`${API_BASE_URL}/api/airing?${params.toString()}`);
         if (token !== discoverToken) return;
 
-        // [CHANGED] Shows the user skipped with 👎 are filtered out
-        renderRow("trendingRow", filterDisliked(list), "Nothing trending right now.");
+        // Shows the user skipped with the thumbs-down button are filtered out
+        renderRow("airingRow", filterDisliked(list), "Nothing is airing right now.");
     } catch (err) {
         if (token !== discoverToken) return;
-        console.error("Trending error:", err);
-        document.getElementById("trendingRow").innerHTML =
-            `<p class="row-empty">Couldn't load trending. Check if the server is running.</p>`;
+        console.error("Airing error:", err);
+        document.getElementById("airingRow").innerHTML =
+            `<p class="row-empty">Couldn't load this season. Check if the server is running.</p>`;
         discoverLoadedFor = undefined; // allow a retry next visit
     }
 }
@@ -275,8 +285,11 @@ async function loadPersonalRows(username) {
     // Not connected -> invite the user to connect
     if (!username) {
         tasteRow.innerHTML = `
-            <div class="row-empty">
-                <p>Connect your AniList to get picks ranked by your taste.</p>
+            <div class="connect-banner">
+                <div class="connect-banner-text">
+                    <strong>Get picks ranked by your taste</strong>
+                    <p>Connect your AniList and these rows are built from the shows you rate highly. Only your public username is used.</p>
+                </div>
                 <button type="button" id="discoverConnectBtn" class="continue-cta">Connect AniList</button>
             </div>
         `;
@@ -323,7 +336,7 @@ async function loadPersonalRows(username) {
             section.className = "discover-row";
             section.innerHTML = `
                 <div class="row-header">
-                    <h2>🎯 Because you liked ${escapeHtml(row.seed.title)}</h2>
+                    <h2>${UI_ICONS.target}Because you liked ${escapeHtml(row.seed.title)}</h2>
                     <span class="row-sub">Recommended by fans of the same show</span>
                 </div>
                 <div class="row-scroller"></div>
@@ -345,7 +358,7 @@ async function loadDiscover() {
     discoverToken++; // [ADDED] invalidates any loaders still running from a previous load
 
     // [CHANGED] Trending and the personalised rows load in parallel
-    await Promise.all([loadTrendingRow(username), loadPersonalRows(username)]);
+    await Promise.all([loadAiringRow(username), loadPersonalRows(username)]);
     // Next rows ("Because you liked X", "Based on your profile") get added here.
     // [DONE] Both are implemented in loadPersonalRows() above.
 }
@@ -375,40 +388,52 @@ function renderSavedRow() {
     refreshListsPage();
 }
 
-// ---- Results: note + "Show more" / "Roll again" ----
-// [CHANGED] The note can now hold two kinds of messages: the "loosened the mood" one and a "profile is light" hint
-function updateResultsActions(showRelaxedNote = false, profileNote = "") {
+// ---- Results: note, end-of-list message and "Roll again" ----
+// The note can hold two kinds of messages: the "loosened the mood" one and a "profile is light" hint.
+// It remembers them, so adding the next 10 results (which calls this with no arguments) does not wipe them.
+let resultsNoteState = { relaxed: false, profile: "" };
+
+function updateResultsActions(showRelaxedNote, profileNote) {
+    if (arguments.length > 0) resultsNoteState = { relaxed: Boolean(showRelaxedNote), profile: profileNote || "" };
+
     const note = document.getElementById("resultsNote");
-    const actions = document.getElementById("resultsActions");
-    const showMore = document.getElementById("showMoreBtn");
-    const hasResults = currentResults.length > 0;
+    const rerollTop = document.getElementById("rerollBtn");
+    const rerollEnd = document.getElementById("rerollEndBtn");
+    const end = document.getElementById("resultsEnd");
+    const endText = document.getElementById("resultsEndText");
+
+    const hasPicks = resultsMode === "picks" && currentResults.length > 0;
+    const canReroll = hasPicks && !currentSearchQuery;   // a title search always gives the same results, so no re-roll
 
     const messages = [];
-    if (showRelaxedNote) messages.push("No show matched every mood and genre at once, so we loosened the mood a little to find these.");
-    if (profileNote) messages.push(profileNote);
-
+    if (resultsNoteState.relaxed) messages.push("No show matched every mood and genre at once, so we loosened the mood a little to find these.");
+    if (resultsNoteState.profile) messages.push(resultsNoteState.profile);
     if (note) {
         note.textContent = messages.join(" ");
-        note.classList.toggle("hidden", !(hasResults && messages.length > 0));
+        note.classList.toggle("hidden", !(hasPicks && messages.length > 0));
     }
-    if (actions) actions.classList.toggle("hidden", !hasResults);
-    if (showMore) showMore.classList.toggle("hidden", shownCount >= currentResults.length);
+
+    if (rerollTop) rerollTop.classList.toggle("hidden", !canReroll);
+    if (rerollEnd) rerollEnd.classList.toggle("hidden", !canReroll);
+
+    let endMessage = "";
+    if (resultsMode === "picks") {
+        if (hasPicks && shownCount >= currentResults.length) {
+            endMessage = canReroll
+                ? `That's all ${currentResults.length} picks. Not feeling them?`
+                : `That's everything we found for \u201c${currentSearchQuery}\u201d.`;
+        }
+    } else if (!browseHasMore && browsePage > 0 && !browseLoading && !browseFailed) {
+        endMessage = "You've reached the end of the list.";
+    }
+    if (end) end.classList.toggle("hidden", !endMessage);
+    if (endText) endText.textContent = endMessage;
 }
 
-const showMoreBtn = document.getElementById("showMoreBtn");
-if (showMoreBtn) {
-    showMoreBtn.addEventListener("click", () => {
-        shownCount += RESULTS_PAGE_SIZE;
-        renderAnimeCards(currentResults.slice(0, shownCount));
-        showMoreBtn.classList.toggle("hidden", shownCount >= currentResults.length);
-    });
-}
-
-const rerollBtn = document.getElementById("rerollBtn");
-if (rerollBtn) {
-    // Same filters, new random page -> a fresh set (no scroll jump)
-    rerollBtn.addEventListener("click", () => fetchRecommendations({ scroll: false }));
-}
+// Same filters, new random page -> a fresh set. The top button keeps your place; the one at the end of the list
+// scrolls back up to the new picks.
+document.getElementById("rerollBtn")?.addEventListener("click", () => fetchRecommendations({ scroll: false }));
+document.getElementById("rerollEndBtn")?.addEventListener("click", () => fetchRecommendations({ scroll: true }));
 
 // ---- Escape key closes whatever is open ----
 document.addEventListener("keydown", (e) => {
@@ -459,7 +484,7 @@ watchModalFocus(profileModal, closeProfileModal);
     if (profileSheet) enableSwipeToClose(profileSheet, profileSheet, () => { if (closeProfileModal) closeProfileModal.click(); }, { requireScrollTop: true });
 }
 
-// ---- FILTERS IN THE URL (shareable searches): #/?q=Frieren&mood=funny&genre=Action&rating=7 ----
+// ---- FILTERS IN THE URL (shareable searches): #/search?q=Frieren&mood=funny&genre=Action&rating=7 ----
 function writeFiltersToHash(prefs) {
     const params = new URLSearchParams();
     if (prefs.search) params.set("q", prefs.search);
@@ -473,11 +498,11 @@ function writeFiltersToHash(prefs) {
 
     const queryString = params.toString();
     // replaceState does not fire "hashchange", so the page doesn't re-route or jump
-    history.replaceState(null, "", queryString ? `#/?${queryString}` : "#/");
+    history.replaceState(null, "", queryString ? `#/search?${queryString}` : "#/search");
 }
 
 function clearFiltersFromHash() {
-    if (location.hash.includes("?")) history.replaceState(null, "", "#/");
+    if (location.hash.includes("?")) history.replaceState(null, "", "#/search");
 }
 
 // Reads the filters from the URL, ticks the matching inputs and runs the search. Returns true if it did.
@@ -533,7 +558,7 @@ function restoreFiltersFromHash() {
 
 // If someone edits / pastes a hash with filters while the page is open, apply it fresh
 window.addEventListener("hashchange", () => {
-    if (getRoute() === "home" && location.hash.includes("?")) {
+    if (getRoute() === "search" && location.hash.includes("?")) {
         document.querySelectorAll('.filter-sec input[type="checkbox"], .filter-sec input[type="radio"]').forEach(input => {
             input.checked = false;
             if (input.type === "radio") input.dataset.wasChecked = "false";
@@ -771,7 +796,7 @@ function enhanceScroller(scroller) {
     }, true);
 }
 
-document.querySelectorAll("#discoverView .row-scroller").forEach(enhanceScroller);
+document.querySelectorAll("#discoverView .row-scroller, #homeView .row-scroller").forEach(enhanceScroller);
 
 // ---- "Based on Your Taste": remember what was shown so a new visit / Shuffle brings different shows first ----
 const TASTE_SEEN_KEY = "anirec_taste_seen";
@@ -916,4 +941,259 @@ if (becauseInput && becauseSuggest) {
     document.addEventListener("click", (e) => {
         if (!e.target.closest("#becauseSearchSection .search-field")) hideBecauseSuggest();
     });
+}
+
+
+/* =========================================================
+   HOME PAGE: hero banner, editorial collection, top rated
+   - Hero: the 10 fastest-rising shows (that are not on your list), one at a time, changes every 8 seconds
+   - Editorial pick: one hand-made collection, swapped by the server every 3 days
+   - Top Rated: highly rated shows people actually watch
+   (var instead of let on purpose: these are read by code in earlier files, so they must exist before this line runs)
+========================================================= */
+
+var homeLoadedFor = undefined;   // undefined = Home not loaded yet; otherwise the username (or null) it was loaded for
+var homeToken = 0;               // a slow response for an old load can never overwrite a newer one
+var heroItems = [];
+var heroIndex = 0;
+var heroTimer = null;
+var heroPaused = false;
+var HERO_INTERVAL_MS = 8000;
+var heroReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function heroBackgroundUrl(url) {
+    return `url("${String(url).replace(/"/g, "%22")}")`;
+}
+
+function stopHeroTimer() {
+    clearInterval(heroTimer);
+    heroTimer = null;
+}
+
+function startHeroTimer() {
+    stopHeroTimer();
+    if (heroItems.length < 2 || heroReduceMotion || heroPaused || document.hidden || getRoute() !== "home") return;
+    heroTimer = setInterval(() => goToHero(heroIndex + 1), HERO_INTERVAL_MS);
+}
+
+// The router calls this so the banner does not keep rotating while you are on another page
+function setHeroActive(isHome) {
+    if (isHome) startHeroTimer(); else stopHeroTimer();
+}
+
+function goToHero(index) {
+    if (heroItems.length === 0) return;
+    heroIndex = (index + heroItems.length) % heroItems.length;
+    document.querySelectorAll("#heroTrack .hero-slide").forEach((slide, i) => {
+        const active = i === heroIndex;
+        slide.classList.toggle("is-active", active);
+        slide.setAttribute("aria-hidden", active ? "false" : "true");
+    });
+    document.querySelectorAll("#heroDots .hero-dot").forEach((dot, i) => dot.classList.toggle("is-active", i === heroIndex));
+}
+
+function updateHeroSaveLabels() {
+    document.querySelectorAll("#heroTrack .hero-slide").forEach((slide, i) => {
+        const anime = heroItems[i];
+        const button = slide.querySelector(".hero-save");
+        if (!anime || !button) return;
+        const saved = isSaved(anime.id);
+        button.classList.toggle("is-saved", saved);
+        button.querySelector(".hero-save-label").textContent = saved ? "Saved" : "Save";
+    });
+}
+
+// Shown when the featured list cannot be loaded: a calm static banner instead of an empty hole
+function renderHeroFallback() {
+    const hero = document.getElementById("hero");
+    const track = document.getElementById("heroTrack");
+    if (!hero || !track) return;
+    stopHeroTimer();
+    heroItems = [];
+    hero.classList.remove("is-loading");
+    hero.classList.add("is-fallback");
+    document.getElementById("heroUi")?.classList.add("hidden");
+    track.innerHTML = `
+        <article class="hero-slide is-active">
+            <div class="hero-shade"></div>
+            <div class="hero-content">
+                <p class="hero-eyebrow">AniRec</p>
+                <h2 class="hero-title">Find your next favourite anime</h2>
+                <p class="hero-desc">Browse everything on AniList by popularity, filter by mood, genre and tag, or let Surprise Me pick for you.</p>
+                <div class="hero-actions">
+                    <a class="hero-btn hero-btn-primary" href="#/search"><span>Browse everything</span></a>
+                    <a class="hero-btn hero-btn-ghost" href="#/surprise"><span>Surprise me</span></a>
+                </div>
+            </div>
+        </article>`;
+}
+
+function renderHero() {
+    const hero = document.getElementById("hero");
+    const track = document.getElementById("heroTrack");
+    const dots = document.getElementById("heroDots");
+    if (!hero || !track || !dots) return;
+
+    hero.classList.remove("is-loading", "is-fallback");
+    track.innerHTML = "";
+    dots.innerHTML = "";
+
+    heroItems.forEach((anime, index) => {
+        const title = anime.title?.english || anime.title?.romaji || "Untitled";
+        const cover = anime.coverImage?.extraLarge || anime.coverImage?.large || "";
+        const backdrop = anime.bannerImage || cover;
+        const score = anime.averageScore ? `<span class="hero-score">★ ${(anime.averageScore / 10).toFixed(1)}</span>` : "";
+        const meta = getCardMeta(anime);
+        const trailerLabel = hasRealTrailer(anime) ? "Watch Trailer" : "Find Trailer";
+
+        const slide = document.createElement("article");
+        slide.className = "hero-slide" + (index === 0 ? " is-active" : "");
+        slide.setAttribute("aria-hidden", index === 0 ? "false" : "true");
+        slide.innerHTML = `
+            <div class="hero-bg${anime.bannerImage ? "" : " is-cover"}"></div>
+            <div class="hero-shade"></div>
+            <div class="hero-content">
+                <p class="hero-eyebrow"><span class="hero-rank">#${index + 1}</span>Rising fast right now</p>
+                <h2 class="hero-title">${escapeHtml(title)}</h2>
+                <p class="hero-meta">${score}${meta ? `<span>${escapeHtml(meta)}</span>` : ""}</p>
+                <div class="hero-genres">${(anime.genres || []).slice(0, 3).map(genre => `<span>${escapeHtml(genre)}</span>`).join("")}</div>
+                <p class="hero-desc">${sanitizeDescription(anime.description)}</p>
+                <div class="hero-actions">
+                    <a class="hero-btn hero-btn-primary" href="${escapeHtml(getTrailerUrl(anime, title))}" target="_blank" rel="noopener noreferrer">${CARD_ICONS.play}<span>${trailerLabel}</span></a>
+                    <button type="button" class="hero-btn hero-btn-ghost hero-save" data-hero-action="save"><span class="hero-save-label">Save</span></button>
+                    <button type="button" class="hero-btn hero-btn-ghost" data-hero-action="details"><span>Details</span></button>
+                </div>
+            </div>
+            ${cover ? `<div class="hero-poster"><img alt="" loading="${index === 0 ? "eager" : "lazy"}" referrerpolicy="no-referrer"></div>` : ""}`;
+        slide.querySelector(".hero-bg").style.backgroundImage = heroBackgroundUrl(backdrop);
+        const posterImage = slide.querySelector(".hero-poster img");
+        if (posterImage) posterImage.src = cover;
+        track.appendChild(slide);
+
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "hero-dot" + (index === 0 ? " is-active" : "");
+        dot.dataset.index = String(index);
+        dot.setAttribute("aria-label", `Show ${title}`);
+        dots.appendChild(dot);
+    });
+
+    document.getElementById("heroUi")?.classList.toggle("hidden", heroItems.length < 2);
+    heroIndex = 0;
+    updateHeroSaveLabels();
+    startHeroTimer();
+}
+
+async function loadHero(username) {
+    const token = homeToken;
+    document.getElementById("hero")?.classList.add("is-loading");
+    try {
+        const params = new URLSearchParams();
+        if (username) params.append("username", username);
+        const list = filterDisliked(await fetchJson(`${API_BASE_URL}/api/hero?${params.toString()}`));
+        if (token !== homeToken) return;
+        if (list.length === 0) throw new Error("No featured anime");
+        heroItems = list.slice(0, 10);
+        renderHero();
+    } catch (error) {
+        if (token !== homeToken) return;
+        console.error("Hero error:", error);
+        renderHeroFallback();
+        homeLoadedFor = undefined;   // try again next time Home is opened
+    }
+}
+
+// Hero controls: dots, arrows, Save / Details buttons, pause while the pointer or focus is on it, swipe on phones
+(function wireHero() {
+    const hero = document.getElementById("hero");
+    if (!hero) return;
+
+    hero.addEventListener("click", event => {
+        const dot = event.target.closest(".hero-dot");
+        if (dot) { goToHero(Number(dot.dataset.index)); startHeroTimer(); return; }
+
+        const action = event.target.closest("[data-hero-action]");
+        const anime = heroItems[heroIndex];
+        if (!action || !anime) return;
+        const title = anime.title?.english || anime.title?.romaji || "Untitled";
+        if (action.dataset.heroAction === "details") openAnimeModal(anime.id);
+        if (action.dataset.heroAction === "save") { handleCardAction("save", anime, title); updateHeroSaveLabels(); }
+    });
+
+    document.getElementById("heroPrev")?.addEventListener("click", () => { goToHero(heroIndex - 1); startHeroTimer(); });
+    document.getElementById("heroNext")?.addEventListener("click", () => { goToHero(heroIndex + 1); startHeroTimer(); });
+
+    const pause = () => { heroPaused = true; stopHeroTimer(); };
+    const resume = () => { heroPaused = false; startHeroTimer(); };
+    hero.addEventListener("mouseenter", pause);
+    hero.addEventListener("mouseleave", resume);
+    hero.addEventListener("focusin", pause);
+    hero.addEventListener("focusout", resume);
+    document.addEventListener("visibilitychange", () => { if (document.hidden) stopHeroTimer(); else startHeroTimer(); });
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    hero.addEventListener("touchstart", event => {
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+    }, { passive: true });
+    hero.addEventListener("touchend", event => {
+        const dx = event.changedTouches[0].clientX - touchStartX;
+        const dy = event.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            goToHero(dx < 0 ? heroIndex + 1 : heroIndex - 1);
+            startHeroTimer();
+        }
+    }, { passive: true });
+})();
+
+async function loadCollection(username) {
+    const token = homeToken;
+    const section = document.getElementById("collectionSection");
+    if (!section) return;
+    section.classList.remove("hidden");
+    showRowSkeleton("collectionRow");
+
+    try {
+        const params = new URLSearchParams();
+        if (username) params.append("username", username);
+        const data = await fetchJson(`${API_BASE_URL}/api/collections/current?${params.toString()}`);
+        if (token !== homeToken) return;
+
+        document.getElementById("collectionTitle").textContent = data.title;
+        document.getElementById("collectionBlurb").textContent = data.blurb;
+        document.getElementById("collectionTimer").textContent =
+            data.daysLeft <= 1 ? "New pick tomorrow" : `New pick in ${data.daysLeft} days`;
+        renderRow("collectionRow", filterDisliked(data.items), "Nothing to show right now.");
+    } catch (error) {
+        if (token !== homeToken) return;
+        console.error("Collection error:", error);
+        section.classList.add("hidden");   // a missing editorial row is better than a broken one
+    }
+}
+
+async function loadTopRated(username) {
+    const token = homeToken;
+    showRowSkeleton("topRatedRow");
+    try {
+        const params = new URLSearchParams();
+        if (username) params.append("username", username);
+        const list = await fetchJson(`${API_BASE_URL}/api/top-rated?${params.toString()}`);
+        if (token !== homeToken) return;
+        renderRow("topRatedRow", filterDisliked(list), "Nothing to show right now.");
+    } catch (error) {
+        if (token !== homeToken) return;
+        console.error("Top rated error:", error);
+        document.getElementById("topRatedRow").innerHTML =
+            `<p class="row-empty">Couldn't load this row. Check if the server is running.</p>`;
+        homeLoadedFor = undefined;
+    }
+}
+
+async function loadHome() {
+    const username = localStorage.getItem("anilist_username") || null;
+    if (homeLoadedFor === username) { startHeroTimer(); return; }   // already loaded for this user
+    homeLoadedFor = username;
+    homeToken++;
+    await Promise.all([loadHero(username), loadCollection(username), loadTopRated(username)]);
 }

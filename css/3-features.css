@@ -42,18 +42,18 @@
 .anime-info .reason-text {
     font-size: 12px;
     line-height: 1.35;
-    color: #c9a7e8;
+    color: #f4c59b;
     font-style: italic;
 }
 
-/* ---- Results: note + Show more / Roll again buttons ---- */
+/* ---- Results: note + Roll again buttons ---- */
 .results-note {
     margin: 0 10px 16px;
     padding: 10px 14px;
     font-size: 13px;
     color: var(--accent-soft);
-    background: rgba(214, 141, 86, 0.08);
-    border: 1px solid rgba(214, 141, 86, 0.25);
+    background: rgba(246, 124, 59, 0.08);
+    border: 1px solid rgba(246, 124, 59, 0.25);
     border-radius: var(--r-sm);
 }
 
@@ -168,7 +168,7 @@
 
 .modal-save-btn.saved {
     color: var(--accent);
-    border-color: rgba(214, 141, 86, 0.5);
+    border-color: rgba(246, 124, 59, 0.5);
 }
 
 /* ---- Profile: inline connect error + small chart note ---- */
@@ -358,8 +358,8 @@
     padding: 4px 6px 4px 12px;
     border-radius: 999px;
     font-size: 12px;
-    background: rgba(214, 141, 86, 0.1);
-    border: 1px solid rgba(214, 141, 86, 0.3);
+    background: rgba(246, 124, 59, 0.1);
+    border: 1px solid rgba(246, 124, 59, 0.3);
     color: var(--accent-soft);
 }
 
@@ -458,7 +458,7 @@
     padding: 22px;
     border: 1px solid var(--border);
     border-radius: var(--r-md);
-    background: linear-gradient(135deg, rgba(214, 141, 86, 0.08), rgba(139, 86, 183, 0.08));
+    background: linear-gradient(135deg, rgba(246, 124, 59, 0.08), rgba(225, 110, 44, 0.08));
 }
 
 .because-search .search-box { max-width: 640px; margin-bottom: 8px; }
@@ -625,8 +625,8 @@
 
 .surprise-mode.is-active {
     border-color: var(--accent);
-    background: linear-gradient(160deg, rgba(214, 141, 86, 0.18), rgba(214, 141, 86, 0.03));
-    box-shadow: 0 10px 30px rgba(214, 141, 86, 0.18);
+    background: linear-gradient(160deg, rgba(246, 124, 59, 0.18), rgba(246, 124, 59, 0.03));
+    box-shadow: 0 10px 30px rgba(246, 124, 59, 0.18);
 }
 
 .mode-icon {
@@ -686,9 +686,9 @@
     padding: 34px;
     background: linear-gradient(
   100deg,
-  rgba(13,15,17,0.92) 0%,
-  rgba(13,15,17,0.65) 45%,
-  rgba(13,15,17,0.15) 100%
+  rgba(17, 15, 13, 0.92) 0%,
+  rgba(17, 15, 13, 0.65) 45%,
+  rgba(17, 15, 13, 0.15) 100%
 );
 }
 
@@ -708,7 +708,7 @@
     font-weight: 600;
     letter-spacing: 0.4px;
     color: var(--accent);
-    background: rgba(214, 141, 86, 0.14);
+    background: rgba(246, 124, 59, 0.14);
     border-radius: 999px;
 }
 
@@ -848,7 +848,7 @@
 }
 
 .list-tab:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
-.list-tab.active { background: rgba(214, 141, 86, 0.14); color: var(--accent); }
+.list-tab.active { background: rgba(246, 124, 59, 0.14); color: var(--accent); }
 .list-tab-name { display: flex; align-items: center; gap: 10px; }
 
 .list-count {
@@ -861,7 +861,7 @@
     border-radius: 999px;
 }
 
-.list-tab.active .list-count { background: rgba(214, 141, 86, 0.25); color: var(--accent); }
+.list-tab.active .list-count { background: rgba(246, 124, 59, 0.25); color: var(--accent); }
 .list-rail-hint { margin: 10px; font-size: 12px; line-height: 1.5; color: var(--muted); }
 
 .lists-panel { min-width: 0; }

@@ -19,37 +19,40 @@ html {
 }
 
 :root {
-    /* ---- Brand ----
-       Orange = action / selected (buttons, active tabs, active filters, focus).
-       Purple = ambient (glows, borders on hover, modal halo, genre chips). */
-    --accent: rgb(214, 141, 86);
-    --accent-hover: #e39a62;
-    --accent-soft: #f0b685;
-    --accent-ink: #1b130b;                      /* dark text that sits on an orange button */
-    --accent-tint: rgba(214, 141, 86, 0.14);
-    --accent-line: rgba(214, 141, 86, 0.45);
-    --primary: #8b56b7;
-    --primary-dark: #733f9e;
-    --accent-glow: rgba(139, 86, 183, 0.25);
+    /* ---- Brand (taken from the AniRec logo: ember red-orange -> orange -> amber) ----
+       --accent  = actions / selected things (buttons, active tabs, focus rings)
+       --primary = the deeper ember used for soft glows and hover borders */
+    --ember: #f25e38;
+    --accent: #f67c3b;
+    --accent-hover: #fe963d;
+    --accent-soft: #ffc08a;
+    --amber: #fba93c;
+    --accent-ink: #1d0e07;                      /* dark text that sits on an orange button */
+    --accent-gradient: linear-gradient(135deg, #f25e38 0%, #f67c3b 55%, #fe963d 100%);
+    --accent-tint: rgba(246, 124, 59, 0.14);
+    --accent-line: rgba(246, 124, 59, 0.45);
+    --primary: #f25e38;
+    --primary-dark: #cf4426;
+    --accent-glow: rgba(242, 94, 56, 0.22);
 
-    /* ---- Surfaces (3 levels + a deeper one for pop-ups) ---- */
-    --bg: #0d0f11;
-    --surface-1: #16181c;                       /* cards, panels, sidebar */
-    --surface-2: #1d2025;                       /* inputs, chips, buttons */
-    --surface-3: #262a30;                       /* hover states, dropdown menus */
-    --surface-deep: #0f1115;                    /* modals */
+    /* ---- Surfaces: warm charcoal, 3 levels + a deeper one for pop-ups ---- */
+    --bg: #0d0a09;
+    --surface-1: #171311;                       /* cards, panels, sidebar */
+    --surface-2: #1f1a17;                       /* inputs, chips, buttons */
+    --surface-3: #2a231f;                       /* hover states, dropdown menus */
+    --surface-deep: #120e0c;                    /* modals */
     --surface: var(--surface-1);
     --surface-card: var(--surface-2);
     --surface-solid: var(--surface-3);
 
     /* ---- Lines, text, status ---- */
-    --border: rgba(255, 255, 255, 0.09);
-    --border-strong: rgba(255, 255, 255, 0.18);
-    --text: #f0f4f2;
-    --text-soft: #cfd3d9;
-    --muted: #9aa0a8;
-    --success: #72b280;
-    --danger: #e57373;
+    --border: rgba(255, 232, 214, 0.09);
+    --border-strong: rgba(255, 232, 214, 0.18);
+    --text: #eef8f4;                            /* the mint-white of the logo wordmark */
+    --text-soft: #d8d2cc;
+    --muted: #a39a92;
+    --success: #8fcf9d;
+    --danger: #ef7b6e;
 
     /* ---- Shape + motion: 3 radii, 1 timing ---- */
     --r-sm: 10px;                               /* chips, inputs, small buttons */
@@ -93,7 +96,7 @@ body::-webkit-scrollbar {
     left: 0;
     width: var(--sidebar-w);
     padding: 90px 0 24px;
-    background: rgba(16, 18, 20, 0.96);
+    background: rgba(20, 18, 16, 0.96);
     border-right: 1px solid var(--border);
     z-index: 950;
 }
@@ -158,7 +161,7 @@ body::-webkit-scrollbar {
 
 .nav-links a.active {
     color: var(--accent);
-    background: rgba(214, 141, 86, 0.14);
+    background: rgba(246, 124, 59, 0.14);
 }
 
 .topbar {
@@ -167,10 +170,11 @@ body::-webkit-scrollbar {
     z-index: 900;
     margin-left: var(--sidebar-w);
     transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    background: transparent;
 }
 
 .topbar.is-scrolled {
-    background-color: rgba(13, 15, 17, 0.78);
+    background-color: rgba(17, 15, 13, 0.78);
     border-bottom: 1px solid var(--border);
     -webkit-backdrop-filter: blur(16px) saturate(140%);
     backdrop-filter: blur(16px) saturate(140%);
@@ -198,7 +202,7 @@ body::-webkit-scrollbar {
 
 .nav-surprise-btn.active-indicator {
     color: var(--accent) !important;
-    background: rgba(214, 141, 86, 0.14);
+    background: rgba(246, 124, 59, 0.14);
 }
 
 .surprise-menu {
@@ -384,7 +388,7 @@ body::-webkit-scrollbar {
 
 .connected-badge {
     display: inline-block;
-    background: rgba(214, 141, 86, 0.25);
+    background: rgba(246, 124, 59, 0.25);
     color: var(--success);
     border: 1px solid var(--accent);
     font-size: 12px;
@@ -552,7 +556,7 @@ body::-webkit-scrollbar {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    background: rgba(214, 141, 86, 0.1);
+    background: rgba(246, 124, 59, 0.1);
     border-left: 3px solid var(--accent);
     padding: 12px;
     border-radius: 0 6px 6px 0;
@@ -763,7 +767,7 @@ body::-webkit-scrollbar {
     border-radius: 50%;
     display: inline-block;
     flex-shrink: 0;
-    box-shadow: 0 0 6px rgba(214, 141, 86, 0.6);
+    box-shadow: 0 0 6px rgba(246, 124, 59, 0.6);
     animation: dotPulse 2s infinite ease-in-out;
 }
 

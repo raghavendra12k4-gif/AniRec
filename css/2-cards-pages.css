@@ -12,7 +12,7 @@
    synopsis and the action row (Watch Trailer, +, heart)
 ========================================================= */
 .anime-card {
-    --card-bg: #16181c;
+    --card-bg: #1c1816;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -108,10 +108,10 @@
 }
 
 .status-airing    { background: rgba(22, 163, 74, 0.94); }
-.status-finished  { background: rgba(99, 72, 230, 0.94); }
+.status-finished  { background: rgba(230, 130, 72, 0.94); }
 .status-upcoming  { background: rgba(217, 119, 6, 0.95); }
 .status-cancelled { background: rgba(220, 38, 38, 0.94); }
-.status-hiatus    { background: rgba(71, 85, 105, 0.96); }
+.status-hiatus    { background: rgba(97, 87, 79, 0.96); }
 .status-unknown   { background: rgba(58, 62, 70, 0.92); color: var(--text-soft); }
 
 /* ---- Score badge (top right) ---- */
@@ -125,7 +125,7 @@
     gap: 4px;
     padding: 4px 9px;
     border-radius: var(--r-sm);
-    background: rgba(10, 11, 14, 0.72);
+    background: rgba(14, 12, 10, 0.72);
     color: #ffffff;
     font-size: 12.5px;
     font-weight: 700;
@@ -220,7 +220,7 @@
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.07);
     border: 1px solid rgba(255, 255, 255, 0.13);
-    color: #f2f4f8;
+    color: #f6f5f4;
     font-size: 12.5px;
     font-weight: 600;
     line-height: 1;
@@ -253,7 +253,7 @@
     border: none;
     border-radius: 50%;
     background: transparent;
-    color: #a98be0;
+    color: #f0b27b;
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
@@ -271,7 +271,7 @@
 .card-save-btn.is-active .icon-check { display: block; }
 .card-save-btn.is-active { color: #6ee7a8; }
 
-.card-fav-btn.is-active { color: #ff5d8f; }
+.card-fav-btn.is-active { color: #ff735d; }
 .card-fav-btn.is-active svg path { fill: currentColor; }
 
 .card-main-btn:focus-visible,
@@ -437,9 +437,9 @@
 }
 
 .genre-tag {
-    background: rgba(139, 86, 183, 0.15);
-    color: #dfb2ff;
-    border: 1px solid rgba(139, 86, 183, 0.3);
+    background: rgba(225, 110, 44, 0.15);
+    color: #f7d6ba;
+    border: 1px solid rgba(225, 110, 44, 0.3);
     padding: 3px 8px;
     border-radius: 4px;
     font-size: 12px;
@@ -615,7 +615,7 @@
     font-size: 9px;
     text-transform: capitalize;
     color: var(--primary);
-    background: rgba(139, 86, 183, 0.15);
+    background: rgba(225, 110, 44, 0.15);
     padding: 2px 5px;
     border-radius: 4px;
     display: inline-block;
@@ -784,8 +784,8 @@ main {
     font-size: 12px;
     font-weight: 600;
     color: var(--accent);
-    background: rgba(214, 141, 86, 0.12);
-    border: 1px solid rgba(214, 141, 86, 0.35);
+    background: rgba(246, 124, 59, 0.12);
+    border: 1px solid rgba(246, 124, 59, 0.35);
 }
 
 @media (max-width: 550px) {

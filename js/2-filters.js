@@ -678,14 +678,9 @@ if (resetBtn) {
         clearTimeout(homeSearchSuggestTimer);
         hideHomeSearchSuggest();
 
-        // Hide the results section again (back to the clean home state)
-        document.getElementById("resultSection").classList.add("hidden");
-
-        // [ADDED] Forget the fetched results and remove the filters from the URL (see "FILTERS IN THE URL" below)
-        recommendationRequestId++;
-        currentResults = [];
-        currentSearchQuery = "";
+        // Back to the Search page's starting state: the plain popularity list (remove the filters from the URL too)
         clearFiltersFromHash();
+        startBrowse();
     });
 }
 
@@ -730,40 +725,190 @@ function getPreferences() {
   };
 }
 
-// [ADDED] State for the results area:
-//  - recommendationRequestId: lets us ignore a slow response if the user pressed Apply again meanwhile
-//  - currentResults / shownCount: the server returns up to 20 shows; we reveal 10 at a time ("Show more")
-let recommendationRequestId = 0;
-let currentResults = [];
+// =========================================================
+// RESULTS (Search page): two modes, both load 10 at a time while you scroll
+//  - "browse": every anime on AniList, most popular first, minus what is already on your AniList
+//              (the page's starting state, and what Reset goes back to)
+//  - "picks":  up to 20 personal recommendations after Apply or a title search
+// =========================================================
+let recommendationRequestId = 0;     // lets us ignore a slow response when a newer search has started
+let currentResults = [];             // the (up to 20) picks the server sent
 let currentSearchQuery = "";
-let shownCount = 0;
+let shownCount = 0;                  // how many of currentResults are on screen
 const RESULTS_PAGE_SIZE = 10;
 
-// [CHANGED] Accepts an optional { scroll } flag (Roll Again passes scroll:false so the page doesn't jump)
+let resultsMode = "browse";
+let browsePage = 0;                  // last popularity page that was loaded
+let browseHasMore = true;
+let browseLoading = false;
+let browseFailed = false;            // stops auto-loading after an error until "Try again" is pressed
+let browseToken = 0;                 // changes whenever the list restarts, so a slow old response is ignored
+let searchStarted = false;
+
+function hasActiveFilters(prefs = getPreferences()) {
+    return Boolean(prefs.moods.length || prefs.genres.length || prefs.tags.length || prefs.rating ||
+        prefs.year || prefs.format || prefs.language || prefs.search);
+}
+
+function setResultsStatus(html) {
+    const status = document.getElementById("resultsStatus");
+    if (status) status.innerHTML = html;
+}
+
+function browseSubtitle() {
+    return localStorage.getItem("anilist_username")
+        ? "Most popular first. Shows already on your AniList are left out."
+        : "Most popular first. Connect AniList to leave out what you have already watched.";
+}
+
+// Search page starting state (also what Reset returns to)
+function startBrowse() {
+    resultsMode = "browse";
+    searchStarted = true;
+    recommendationRequestId++;       // cancels a slow "picks" request
+    browseToken++;                   // cancels a slow browse request from before
+    currentResults = [];
+    shownCount = 0;
+    currentSearchQuery = "";
+    browsePage = 0;
+    browseHasMore = true;
+    browseLoading = false;
+    browseFailed = false;
+
+    document.getElementById("resultsTitle").textContent = "Popular on AniList";
+    document.getElementById("resultsSubtitle").textContent = browseSubtitle();
+    setResultsStatus("");
+    updateResultsActions(false);
+    loadMoreBrowse();
+}
+
+// Called when the Search page is shown: start the list once (not again every time you come back)
+function ensureSearchStarted() {
+    if (searchStarted) return;
+    if (location.hash.includes("?")) return;   // a shared link with filters: restoreFiltersFromHash() runs the search instead
+    startBrowse();
+}
+
+async function loadMoreBrowse() {
+    if (resultsMode !== "browse" || browseLoading || !browseHasMore || browseFailed) return;
+    browseLoading = true;
+    const token = browseToken;
+    const container = document.getElementById("animeResults");
+    const isFirstPage = browsePage === 0;
+
+    if (isFirstPage) {
+        container.innerHTML = Array(6).fill(0).map(() => skeletonCardHTML()).join("");
+    } else {
+        setResultsStatus('<span class="loading-more">Loading more</span>');
+    }
+
+    try {
+        const params = new URLSearchParams({ page: String(browsePage + 1), perPage: String(RESULTS_PAGE_SIZE) });
+        const username = localStorage.getItem("anilist_username");
+        if (username) params.append("username", username);
+        const skipped = getDislikedIds();
+        if (skipped.length > 0) params.append("exclude", skipped.join(","));
+
+        const data = await fetchJson(`${API_BASE_URL}/api/browse?${params.toString()}`);
+        if (token !== browseToken) return;
+
+        if (isFirstPage) container.innerHTML = "";
+        const items = filterDisliked(data.items || []);
+        appendAnimeCards(items);
+        browsePage += 1;
+        browseHasMore = Boolean(data.hasNextPage);
+        setResultsStatus("");
+        if (isFirstPage && items.length === 0 && !browseHasMore) {
+            container.innerHTML = '<p class="no-results">Nothing to show right now.</p>';
+        }
+    } catch (error) {
+        if (token !== browseToken) return;
+        console.error("Browse error:", error);
+        browseFailed = true;
+        if (isFirstPage) container.innerHTML = "";
+        const message = isFirstPage ? "Couldn't load anime. Check that the server is running." : "Couldn't load more.";
+        setResultsStatus(`<p class="error-msg">${escapeHtml(message)} <button type="button" class="results-retry" id="resultsRetryBtn">Try again</button></p>`);
+        const retry = document.getElementById("resultsRetryBtn");
+        if (retry) retry.addEventListener("click", () => { browseFailed = false; setResultsStatus(""); loadMoreBrowse(); });
+    } finally {
+        if (token === browseToken) {
+            browseLoading = false;
+            updateResultsActions();
+            if (!browseFailed) checkResultsSentinel();
+        }
+    }
+}
+
+// Shows the next 10 of the (up to 20) personal picks
+function revealMorePicks() {
+    if (resultsMode !== "picks" || shownCount >= currentResults.length) return;
+    const next = currentResults.slice(shownCount, shownCount + RESULTS_PAGE_SIZE);
+    shownCount += next.length;
+    appendAnimeCards(next, { showReason: true });
+    updateResultsActions();
+    checkResultsSentinel();
+}
+
+// ---- Infinite scroll: an invisible marker under the list; when it gets within about a quarter of a screen, the next 10 load ----
+function searchPageVisible() {
+    const view = document.getElementById("searchView");
+    return Boolean(view) && !view.classList.contains("hidden");
+}
+
+function loadMoreResults() {
+    if (!searchPageVisible()) return;
+    if (resultsMode === "browse") loadMoreBrowse();
+    else revealMorePicks();
+}
+
+// The observer only fires when the marker *changes* position, so after every batch we check by hand too
+function checkResultsSentinel() {
+    requestAnimationFrame(() => {
+        const sentinel = document.getElementById("resultsSentinel");
+        if (!sentinel || !searchPageVisible()) return;
+        if (sentinel.getBoundingClientRect().top < window.innerHeight + 250) loadMoreResults();
+    });
+}
+
+{
+    const sentinel = document.getElementById("resultsSentinel");
+    if (sentinel && "IntersectionObserver" in window) {
+        new IntersectionObserver(entries => {
+            if (entries.some(entry => entry.isIntersecting)) loadMoreResults();
+        }, { rootMargin: "250px 0px" }).observe(sentinel);
+    }
+}
+
+// Accepts an optional { scroll } flag (Roll Again passes scroll:false so the page doesn't jump)
 async function fetchRecommendations(options = {}) {
     const { scroll = true } = options;
     const prefs = getPreferences();
     const resultsContainer = document.getElementById("animeResults");
     currentSearchQuery = prefs.search;
 
-    // [ADDED] Every call gets a new id; only the newest call is allowed to draw results
+    // Switch to "picks" mode and stop any popularity request that is still on its way
+    resultsMode = "picks";
+    searchStarted = true;
+    browseToken++;
+    browseLoading = false;
+    browseFailed = false;
+
+    // Every call gets a new id; only the newest call is allowed to draw results
     const requestId = ++recommendationRequestId;
 
-    // Reveal the results section and bring it into view
-    const resultSection = document.getElementById("resultSection");
-    resultSection.classList.remove("hidden");
     document.getElementById("resultsTitle").textContent = prefs.search
         ? `Results for “${prefs.search}”`
         : "Your Recommendations";
     document.getElementById("resultsSubtitle").textContent = prefs.search
         ? "Matched to your search and selected filters"
-        : "Matched to your filters and the shows you rate highly";
+        : "Up to 20 picks matched to your filters and the shows you rate highly";
     if (scroll) {
-        resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById("resultSection").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    // [ADDED] Hide the old "Show more / Roll again" buttons and note while loading
     currentResults = [];
+    shownCount = 0;
+    setResultsStatus("");
     updateResultsActions(false);
 
     resultsContainer.innerHTML = Array(5).fill(0).map(() => skeletonCardHTML()).join('');
@@ -822,19 +967,23 @@ async function fetchRecommendations(options = {}) {
 
         if (requestId !== recommendationRequestId) return; // a newer search replaced this one
 
-        // [CHANGED] Show the server's own message (e.g. "AniList is rate-limiting...") instead of crashing on .slice()
+        // Show the server's own message (e.g. "AniList is rate-limiting...") instead of crashing on .slice()
         if (!response.ok) {
             const serverError = new Error(payload?.error || "Request failed");
             serverError.fromServer = true;
             throw serverError;
         }
 
-        currentResults = Array.isArray(payload) ? payload : [];
-        shownCount = RESULTS_PAGE_SIZE;
-        renderAnimeCards(currentResults.slice(0, shownCount));
+        currentResults = Array.isArray(payload) ? payload.slice(0, 20) : [];   // never more than 20 picks
+        resultsContainer.innerHTML = "";
+        if (currentResults.length === 0) {
+            renderAnimeCards([]);   // draws the "nothing matched" message
+        } else {
+            revealMorePicks();      // the first 10; scrolling reveals the rest
+        }
 
-        // The server sets X-Match-Level: relaxed when it had to loosen the mood/genre combo to find matches
-        // [CHANGED] Also reads X-Profile-Strength: if the recommender knows little about the user, say how to fix that
+        // The server sets X-Match-Level: relaxed when it had to loosen the mood/genre combo to find matches.
+        // X-Profile-Strength: if the recommender knows little about the user, say how to fix that.
         const strength = response.headers.get("X-Profile-Strength");
         const hasPersonalSource = Boolean(prefs.username) || getSeedPicks().length > 0;
         const profileNote = hasPersonalSource && strength !== "good"

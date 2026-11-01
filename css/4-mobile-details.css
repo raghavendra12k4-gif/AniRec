@@ -58,7 +58,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
 
     /* ----- Bottom tab bar (the sidebar) ----- */
     .nav-links .logo-icon { display: none; }          /* it was floating on top of the tabs */
-    .sidebar { padding: 0 6px; background: rgba(16, 18, 20, 0.98); }
+    .sidebar { padding: 0 6px; background: rgba(20, 18, 16, 0.98); }
     .nav-links li { flex: 1 1 0; min-width: 0; }      /* 5 tabs share the width, so 320px phones fit too */
     .nav-links li.nav-search-item { margin: 0; }
     .nav-links a { width: 100%; max-width: 78px; }
@@ -113,7 +113,19 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
 
     /* ----- Cards: compact, one or two per row depending on the width ----- */
     .anime-results { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-    .card-poster, .skeleton-img { aspect-ratio: 16 / 10; }
+    @media (max-width: 760px) {
+    /* Portrait anime posters */
+    .row-scroller:not(#continueRow) .card-poster,
+    .row-scroller:not(#continueRow) .skeleton-img {
+        aspect-ratio: 3 / 4;
+    }
+
+    /* Slightly narrower cards to suit portrait posters */
+    .row-scroller:not(#continueRow) .anime-card {
+        flex: 0 0 185px;
+        width: 185px;
+    }
+}
     .anime-info { padding: 0 14px 14px; }
     .anime-info h3 { font-size: 16px; }
     .anime-info .reason-text { font-size: 11px; }
@@ -218,9 +230,9 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     max-height: 90dvh;
     border-radius: var(--r-md);
     background: var(--surface-deep);
-    border: 1px solid rgba(139, 86, 183, 0.45);
+    border: 1px solid rgba(225, 110, 44, 0.45);
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 24px 70px rgba(0, 0, 0, 0.65),
-                0 0 50px -24px rgba(139, 86, 183, 0.8);
+                0 0 50px -24px rgba(225, 110, 44, 0.8);
     overscroll-behavior: contain;
 }
 
@@ -232,12 +244,12 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     width: 36px;
     height: 36px;
     font-size: 24px;
-    background: rgba(10, 10, 16, 0.55);
+    background: rgba(15, 13, 11, 0.55);
     border: 1px solid rgba(255, 255, 255, 0.28);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
 }
-#animeModal .close-btn:hover { background: rgba(10, 10, 16, 0.9); }
+#animeModal .close-btn:hover { background: rgba(15, 13, 11, 0.9); }
 
 #animeModal .loading-msg,
 #animeModal .error-msg { padding: 70px 24px; }
@@ -276,11 +288,11 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     z-index: -2;
     background:
         /* soft vignette on the top edge: keeps the artwork cinematic */
-        linear-gradient(180deg, rgba(6, 6, 14, 0.45) 0%, rgba(6, 6, 14, 0) 26%),
+        linear-gradient(180deg, rgba(12, 10, 8, 0.45) 0%, rgba(12, 10, 8, 0) 26%),
         /* dark wash behind the text column (left to right) */
-        linear-gradient(90deg, rgba(8, 8, 16, 0.94) 0%, rgba(8, 8, 16, 0.86) 38%, rgba(8, 8, 16, 0.55) 66%, rgba(8, 8, 16, 0.08) 92%),
+        linear-gradient(90deg, rgba(14, 12, 10, 0.94) 0%, rgba(14, 12, 10, 0.86) 38%, rgba(14, 12, 10, 0.55) 66%, rgba(14, 12, 10, 0.08) 92%),
         /* heavier wash where the synopsis and buttons sit, melting into the tabs below */
-        linear-gradient(180deg, rgba(8, 8, 16, 0) 18%, rgba(10, 10, 18, 0.7) 58%, rgba(15, 17, 21, 0.94) 86%, var(--surface-deep) 100%);
+        linear-gradient(180deg, rgba(14, 12, 10, 0) 18%, rgba(16, 14, 12, 0.7) 58%, rgba(21, 17, 15, 0.94) 86%, var(--surface-deep) 100%);
 }
 
 .am-top {
@@ -297,7 +309,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     border-radius: var(--r-sm);
     border: 1px solid color-mix(in srgb, var(--am-accent) 60%, #ffffff22);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), 0 0 36px -8px var(--am-accent);
-    background: #1a1a24;
+    background: #241e1a;
 }
 
 .am-main { flex: 1; min-width: 0; padding-right: 40px; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55); }
@@ -314,7 +326,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
 .am-native {
     margin: 0 0 12px;
     font-size: 14px;
-    color: #a9a9c0;
+    color: #bdb4ac;
 }
 
 .am-badges {
@@ -344,7 +356,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
 .am-status-airing    { background: rgba(22, 163, 74, 0.8);   border-color: rgba(74, 222, 128, 0.5); }
 .am-status-upcoming  { background: rgba(217, 119, 6, 0.8); }
 .am-status-cancelled { background: rgba(220, 38, 38, 0.8); }
-.am-status-hiatus    { background: rgba(71, 85, 105, 0.9); }
+.am-status-hiatus    { background: rgba(97, 87, 79, 0.9); }
 .am-status-unknown   { background: rgba(58, 62, 70, 0.9); color: var(--text-soft); }
 
 .am-status-dot { display: none; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
@@ -352,12 +364,12 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
 
 .am-score {
     color: #f0b685;
-    background: rgba(214, 141, 86, 0.16);
-    border: 1px solid rgba(214, 141, 86, 0.55);
+    background: rgba(246, 124, 59, 0.16);
+    border: 1px solid rgba(246, 124, 59, 0.55);
 }
 
 .am-meta {
-    color: #d8d8ea;
+    color: #e5e1dd;
     padding: 4px 2px;
     font-weight: 500;
 }
@@ -367,8 +379,8 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     border-radius: var(--r-sm);
     font-size: 12px;
     font-weight: 600;
-    color: #e6e6f5;
-    background: rgba(10, 10, 20, 0.45);
+    color: #f0eeeb;
+    background: rgba(17, 15, 13, 0.45);
     border: 1px solid rgba(255, 255, 255, 0.22);
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
@@ -391,8 +403,8 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     padding: 5px 16px;
     border-radius: 999px;
     font-size: 12.5px;
-    background: rgba(10, 10, 20, 0.5);
-    color: #ececf8;
+    background: rgba(17, 15, 13, 0.5);
+    color: #f4f2f0;
     border: 1px solid rgba(255, 255, 255, 0.2);
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
@@ -404,7 +416,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     margin: 0;
     font-size: 13.5px;
     line-height: 1.6;
-    color: #e8e8f6;
+    color: #f1efed;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
@@ -439,7 +451,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     padding: 10px 15px;
     border-radius: var(--r-sm);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(12, 12, 22, 0.55);
+    background: rgba(20, 16, 14, 0.55);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
     color: var(--text-soft);
@@ -450,7 +462,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
-.am-btn:hover { background: rgba(40, 40, 62, 0.85); border-color: rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
+.am-btn:hover { background: rgba(59, 49, 43, 0.85); border-color: rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
 .am-btn svg { flex: none; }
 .am-btn .icon-check { display: none; }
 .am-btn.is-active .icon-plus { display: none; }
@@ -460,10 +472,10 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
 .am-btn-primary {
     padding-left: 22px;
     padding-right: 22px;
-    background: linear-gradient(135deg, var(--accent-hover), #c4733a);
+    background: linear-gradient(135deg, var(--accent-hover), #e0551f);
     border-color: transparent;
     color: var(--accent-ink);
-    box-shadow: 0 6px 20px -6px rgba(214, 141, 86, 0.8);
+    box-shadow: 0 6px 20px -6px rgba(246, 124, 59, 0.8);
 }
 .am-btn-primary:hover { background: linear-gradient(135deg, var(--accent-soft), var(--accent-hover)); border-color: transparent; }
 
@@ -511,7 +523,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     height: 2px;
     border-radius: 2px;
     background: var(--accent);
-    box-shadow: 0 0 10px rgba(214, 141, 86, 0.55);
+    box-shadow: 0 0 10px rgba(246, 124, 59, 0.55);
 }
 .am-tab-count {
     display: inline-block;
@@ -519,7 +531,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     margin-left: 4px;
     padding: 1px 6px;
     border-radius: 999px;
-    background: rgba(214, 141, 86, 0.2);
+    background: rgba(246, 124, 59, 0.2);
     color: #f0b685;
     font-size: 11px;
     line-height: 1.5;
@@ -547,7 +559,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     text-decoration: none;
     transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
-.am-watch-tile:hover { transform: translateY(-3px); border-color: rgba(139, 86, 240, 0.8); background: rgba(139, 86, 240, 0.08); }
+.am-watch-tile:hover { transform: translateY(-3px); border-color: rgba(240, 142, 86, 0.8); background: rgba(240, 142, 86, 0.08); }
 
 .am-watch-logo {
     display: grid;
@@ -556,8 +568,8 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     height: 42px;
     overflow: hidden;
     border-radius: var(--r-sm);
-    color: #e9e0ff;
-    background: color-mix(in srgb, var(--logo-tint, #8b56f0) 24%, #15151f);
+    color: #fcefe3;
+    background: color-mix(in srgb, var(--logo-tint, #f08e56) 24%, #1e1916);
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 .am-watch-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -570,7 +582,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     font-size: 11px;
     font-weight: 700;
     color: var(--accent-ink);
-    background: linear-gradient(135deg, var(--accent-hover), #c4733a);
+    background: linear-gradient(135deg, var(--accent-hover), #e0551f);
 }
 
 /* Miruro: a search, not a direct link -> dashed, muted, different icon and label */
@@ -619,7 +631,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     .am-badges, .am-genres { justify-content: center; }
     .am-hero-shade {
         background:
-            linear-gradient(180deg, rgba(6, 6, 14, 0.4) 0%, rgba(8, 8, 16, 0.5) 22%, rgba(10, 10, 18, 0.9) 50%, var(--surface-deep) 100%);
+            linear-gradient(180deg, rgba(12, 10, 8, 0.4) 0%, rgba(14, 12, 10, 0.5) 22%, rgba(16, 14, 12, 0.9) 50%, var(--surface-deep) 100%);
     }
     .am-meta + .am-meta::before { display: none; }
     .am-meta { padding: 4px 8px; }
@@ -645,7 +657,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     padding: 7px 13px;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.28);
-    background: rgba(10, 10, 16, 0.55);
+    background: rgba(15, 13, 11, 0.55);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
     color: var(--text-soft);
@@ -655,7 +667,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease;
 }
-.am-banner-btn:hover { background: rgba(40, 40, 62, 0.85); border-color: rgba(139, 86, 240, 0.8); }
+.am-banner-btn:hover { background: rgba(59, 49, 43, 0.85); border-color: rgba(240, 142, 86, 0.8); }
 .am-banner-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 @media (min-width: 761px) {
@@ -678,7 +690,7 @@ button, .filter-btn, .anime-card, .list-tab, .tab-btn, .suggest-item {
     justify-content: center;
     gap: 14px;
     padding: 18px;
-    background: rgba(4, 4, 10, 0.94);
+    background: rgba(8, 7, 6, 0.94);
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
 }

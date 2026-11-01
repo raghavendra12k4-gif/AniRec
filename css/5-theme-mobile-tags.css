@@ -1,7 +1,7 @@
 /* =========================================================
-   style part 5 of 5: THEME, MOBILE v2, TAGS
+   style part 5 of 5: THEME, MOBILE, TAGS, HOME + SEARCH PAGE
    Unified look, latest phone layout, Tag filter.
-   Unified design layer, the Filters bottom sheet / compact cards / bottom-sheet pop-ups, and the searchable Tag filter (must load LAST).
+   Unified design layer, the Filters bottom sheet / compact cards / bottom-sheet pop-ups, the searchable Tag filter, and the newest Home hero + Search page styles (must load LAST).
    Load order matters: index.html must link the 5 css files in number
    order (1 -> 5); later files override earlier ones.
 ========================================================= */
@@ -14,7 +14,7 @@
    To restyle the whole site later, change the tokens at the top of this file.
 ========================================================= */
 
-::selection { background: rgba(214, 141, 86, 0.35); color: #fff; }
+::selection { background: rgba(246, 124, 59, 0.35); color: #fff; }
 
 /* One focus ring everywhere (:where keeps specificity at zero so specific rules can still win) */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
@@ -34,14 +34,14 @@ body::before {
     z-index: -1;
     pointer-events: none;
     background:
-        radial-gradient(900px 420px at 14% -6%, rgba(139, 86, 183, 0.17), transparent 70%),
-        radial-gradient(760px 380px at 92% 2%, rgba(214, 141, 86, 0.10), transparent 70%),
-        radial-gradient(1000px 520px at 50% 112%, rgba(139, 86, 183, 0.08), transparent 70%);
+        radial-gradient(900px 420px at 14% -6%, rgba(225, 110, 44, 0.17), transparent 70%),
+        radial-gradient(760px 380px at 92% 2%, rgba(246, 124, 59, 0.10), transparent 70%),
+        radial-gradient(1000px 520px at 50% 112%, rgba(225, 110, 44, 0.08), transparent 70%);
 }
 
 /* ---------- 2. Sidebar + top bar ---------- */
 .sidebar {
-    background: linear-gradient(180deg, rgba(23, 25, 30, 0.97), rgba(13, 15, 17, 0.97));
+    background: linear-gradient(180deg, rgba(30, 26, 23, 0.97), rgba(17, 15, 13, 0.97));
     border-right: 1px solid var(--border);
     box-shadow: 14px 0 40px -24px rgba(0, 0, 0, 0.8);
 }
@@ -94,7 +94,7 @@ body::before {
     top: -80px;
     width: 460px;
     height: 240px;
-    background: radial-gradient(closest-side, rgba(139, 86, 183, 0.22), transparent);
+    background: radial-gradient(closest-side, rgba(225, 110, 44, 0.22), transparent);
     filter: blur(8px);
     pointer-events: none;
     z-index: -1;
@@ -163,7 +163,7 @@ body::before {
 }
 .filter-btn:hover { background: var(--surface-3); border-color: var(--accent-line); }
 .filter.open .filter-btn { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-tint); }
-.filter-btn.active { color: #fff; box-shadow: inset 0 0 0 1px rgba(214, 141, 86, 0.15); }
+.filter-btn.active { color: #fff; box-shadow: inset 0 0 0 1px rgba(246, 124, 59, 0.15); }
 .filter-btn.active .btn-txt { font-weight: 600; }
 
 .filter-menu {
@@ -223,7 +223,7 @@ body::before {
 .modal-watch-btn:hover {
     background: var(--accent-hover);
     background-color: var(--accent-hover);
-    box-shadow: 0 10px 26px -10px rgba(214, 141, 86, 0.75);
+    box-shadow: 0 10px 26px -10px rgba(246, 124, 59, 0.75);
 }
 .modal-watch-btn.official-watch-btn { background-color: #2f7d57; color: #fff; }
 .modal-watch-btn.official-watch-btn:hover { background-color: #266646; box-shadow: none; }
@@ -256,7 +256,7 @@ body::before {
         border-color: var(--accent-line);
         color: #fff;
         transform: var(--lift);
-        box-shadow: 0 10px 24px -14px rgba(214, 141, 86, 0.6);
+        box-shadow: 0 10px 24px -14px rgba(246, 124, 59, 0.6);
     }
     .surprise-mode:hover,
     .list-item:hover,
@@ -289,27 +289,27 @@ body::before {
 .toast { background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: var(--r-sm); }
 
 /* ---------- 7. Pop-ups: profile window now matches the details window ---------- */
-.modal-overlay { background: rgba(5, 6, 10, 0.78); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.modal-overlay { background: rgba(9, 7, 6, 0.78); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 
 #profileModal .modal-content {
     max-width: 540px;
     padding: 28px;
     background: var(--surface-deep);
-    border: 1px solid rgba(139, 86, 183, 0.45);
+    border: 1px solid rgba(225, 110, 44, 0.45);
     border-radius: var(--r-lg);
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 24px 70px rgba(0, 0, 0, 0.65),
-                0 0 50px -24px rgba(139, 86, 183, 0.8);
+                0 0 50px -24px rgba(225, 110, 44, 0.8);
     overscroll-behavior: contain;
 }
 
 #profileModal .close-btn {
     margin: -8px -8px 0 0;
-    background: rgba(10, 10, 16, 0.55);
+    background: rgba(15, 13, 11, 0.55);
     border: 1px solid rgba(255, 255, 255, 0.22);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
 }
-#profileModal .close-btn:hover { background: rgba(10, 10, 16, 0.9); color: var(--accent); }
+#profileModal .close-btn:hover { background: rgba(15, 13, 11, 0.9); color: var(--accent); }
 
 #profileModal h2 { font-family: "Alata", sans-serif; font-size: 1.5rem; line-height: 1.2; margin-bottom: 6px; }
 #profileModal h2::before {
@@ -326,7 +326,7 @@ body::before {
 
 .user-header {
     padding: 16px;
-    background: linear-gradient(135deg, rgba(139, 86, 183, 0.18), rgba(214, 141, 86, 0.07)), var(--surface-1);
+    background: linear-gradient(135deg, rgba(225, 110, 44, 0.18), rgba(246, 124, 59, 0.07)), var(--surface-1);
     border: 1px solid var(--border);
     border-radius: var(--r-md);
 }
@@ -424,7 +424,7 @@ body::before {
     height: 2px;
     border-radius: 2px;
     background: var(--accent);
-    box-shadow: 0 0 10px rgba(214, 141, 86, 0.55);
+    box-shadow: 0 0 10px rgba(246, 124, 59, 0.55);
 }
 
 .watchlist-item { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); transition: border-color var(--ease); }
@@ -440,7 +440,7 @@ body::before {
 /* ---------- 8. Small screens ---------- */
 @media (max-width: 760px) {
     /* the sidebar becomes the bottom tab bar: indicator goes on top of the tab instead of the left edge */
-    .sidebar { background: rgba(16, 18, 20, 0.98); box-shadow: 0 -14px 30px -20px rgba(0, 0, 0, 0.9); }
+    .sidebar { background: rgba(20, 18, 16, 0.98); box-shadow: 0 -14px 30px -20px rgba(0, 0, 0, 0.9); }
     .nav-links a.active::before { left: 26%; right: 26%; top: -3px; bottom: auto; width: auto; height: 3px; }
     .filter-sec { padding: 14px; border-radius: var(--r-md); }
     .page-head h1 { font-size: 1.7rem; }
@@ -508,8 +508,8 @@ body.sheet-lock { overflow: hidden; }
     .toast { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }
 
     /* ----- Lighter effects: big blurs are what makes phones stutter while scrolling ----- */
-    .score-badge { background: rgba(10, 11, 14, 0.84); -webkit-backdrop-filter: none; backdrop-filter: none; }
-    .modal-overlay { background: rgba(5, 6, 10, 0.84); -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .score-badge { background: rgba(14, 12, 10, 0.84); -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .modal-overlay { background: rgba(9, 7, 6, 0.84); -webkit-backdrop-filter: none; backdrop-filter: none; }
     .page-head::before { filter: none; }
 
     /* ======================= FILTERS ======================= */
@@ -588,7 +588,7 @@ body.sheet-lock { overflow: hidden; }
         position: fixed;
         inset: 0;
         z-index: 1;
-        background: rgba(5, 6, 10, 0.78);
+        background: rgba(9, 7, 6, 0.78);
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.25s ease;
@@ -606,7 +606,7 @@ body.sheet-lock { overflow: hidden; }
         max-height: 88vh;
         max-height: 88dvh;
         background: var(--surface-deep);
-        border: 1px solid rgba(139, 86, 183, 0.45);
+        border: 1px solid rgba(225, 110, 44, 0.45);
         border-bottom: 0;
         border-radius: var(--r-lg) var(--r-lg) 0 0;
         box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.6);
@@ -933,7 +933,7 @@ body.sheet-lock { overflow: hidden; }
     cursor: pointer;
     transition: background var(--ease), color var(--ease);
 }
-.tag-chip:hover { background: rgba(214, 141, 86, 0.26); color: #fff; }
+.tag-chip:hover { background: rgba(246, 124, 59, 0.26); color: #fff; }
 .tag-chip-x { font-size: 15px; line-height: 1; opacity: 0.8; }
 .tag-limit-note { font-size: 11px; color: var(--muted); }
 
@@ -969,4 +969,894 @@ body.sheet-lock { overflow: hidden; }
     }
     .tag-search-input { font-size: 16px; }   /* 16px stops iPhones zooming the page when the box is focused */
     .tag-option.is-locked { opacity: 0.4; }
+}
+
+
+/* =========================================================
+   HOME + SEARCH PAGE + SIMPLER LOOK (v3, last block on purpose)
+   - Warm palette from the AniRec logo (no purple anywhere)
+   - Home: hero banner, Continue Watching, editorial pick, Top Rated
+   - Search page: results header, infinite-scroll status, end-of-list block
+   - Calmer details: quiet status badges, line icons, one gradient for primary buttons, footer
+========================================================= */
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
+
+/* ---------- calmer page background ---------- */
+body::before {
+    background:
+        radial-gradient(900px 480px at 50% -14%, rgba(242, 94, 56, 0.10), transparent 70%),
+        radial-gradient(700px 420px at 100% 100%, rgba(254, 150, 61, 0.05), transparent 70%);
+}
+.page-head::before { display: none; }
+.page-head::after { background: var(--accent-gradient); }
+.page-head h1 span {
+    background: linear-gradient(90deg, var(--ember), var(--amber));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* the little orange bars before section titles are gone: cleaner without them */
+.row-header h2::before,
+.result-sec h2::before,
+.continue-sec h2::before,
+.lists-panel-head h2::before { display: none; }
+
+.filter-sec { background: var(--surface-1); box-shadow: none; }
+.sidebar { background: rgba(13, 10, 9, 0.96); }
+
+/* ---------- line icons (replace emoji) ---------- */
+.btn-icon,
+.h-icon {
+    width: 1.1em;
+    height: 1.1em;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vertical-align: -0.16em;
+}
+.h-icon { margin-right: 9px; color: var(--accent); width: 1.05em; height: 1.05em; }
+.results-action-btn,
+.row-action-btn,
+.stage-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.row-action-btn .btn-icon { width: 15px; height: 15px; }
+
+.mode-icon svg { width: 24px; height: 24px; fill: none; stroke: var(--accent); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.stage-empty .stage-dice { width: 54px; height: 54px; fill: none; stroke: var(--accent-soft); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
+.stage-loading .dice { display: inline-flex; }
+.stage-loading .dice .btn-icon { width: 46px; height: 46px; color: var(--accent); stroke-width: 1.5; }
+.quote-icon svg { width: 20px; height: 20px; fill: none; stroke: var(--accent-soft); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.list-tab-name .btn-icon { width: 16px; height: 16px; margin-right: 8px; vertical-align: -3px; }
+
+/* ---------- primary buttons share the logo gradient ---------- */
+.generate-btn,
+.search-submit,
+.continue-cta,
+.connect-input-group button,
+.modal-watch-btn {
+    background: var(--accent-gradient);
+    background-color: var(--ember);
+    color: var(--accent-ink);
+}
+.generate-btn:hover,
+.search-submit:hover,
+.continue-cta:hover,
+.connect-input-group button:hover,
+.modal-watch-btn:hover {
+    background: linear-gradient(135deg, #ff6a42 0%, #ff8444 55%, #ffa24a 100%);
+    background-color: var(--accent-hover);
+    box-shadow: 0 10px 26px -10px rgba(242, 94, 56, 0.7);
+}
+
+/* ---------- quiet status badges: same look for every status, only the text colour hints at it ---------- */
+.status-badge,
+.status-airing, .status-finished, .status-upcoming, .status-cancelled, .status-hiatus, .status-unknown {
+    background: rgba(13, 10, 9, 0.72);
+    color: var(--text-soft);
+    border: 1px solid rgba(255, 232, 214, 0.14);
+    box-shadow: none;
+    font-weight: 600;
+}
+.status-airing { color: var(--success); }
+.status-airing .status-dot { background: var(--success); }
+.status-upcoming { color: var(--accent-soft); }
+.status-cancelled { color: var(--danger); }
+
+/* ---------- HOME: hero banner ---------- */
+.hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    margin: 0 calc(var(--page-pad) * -1) 38px;     /* runs edge to edge inside <main> */
+    height: clamp(430px, 64vh, 640px);
+    background: var(--surface-1);
+}
+.hero-track, .hero-slide { position: absolute; inset: 0; }
+
+.hero-slide {
+    display: flex;
+    align-items: flex-end;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.7s ease, visibility 0s linear 0.7s;
+}
+.hero-slide.is-active { opacity: 1; visibility: visible; z-index: 1; transition: opacity 0.7s ease, visibility 0s; }
+
+.hero-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center 22%;
+    transform: scale(1.05);
+    transition: transform 9s ease-out;
+}
+.hero-slide.is-active .hero-bg { transform: scale(1); }
+.hero-bg.is-cover { filter: blur(26px) saturate(1.15); transform: scale(1.3); opacity: 0.7; }
+
+.hero-shade {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(90deg, rgba(13, 10, 9, 0.94) 0%, rgba(13, 10, 9, 0.7) 38%, rgba(13, 10, 9, 0.12) 78%, rgba(13, 10, 9, 0.3) 100%),
+        linear-gradient(0deg, var(--bg) 0%, rgba(13, 10, 9, 0) 40%);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(680px, 100%);
+    padding: 0 var(--page-pad) 66px;
+}
+
+.hero-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--accent-soft);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+.hero-rank { padding: 3px 9px; border-radius: 999px; background: var(--accent-gradient); color: var(--accent-ink); letter-spacing: 0; }
+
+.hero-title {
+    font-family: "Alata", sans-serif;
+    font-size: clamp(2rem, 4.6vw, 3.6rem);
+    font-weight: 400;
+    line-height: 1.06;
+    color: #fff;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+.hero-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; color: var(--text-soft); font-size: 14px; }
+.hero-score { color: var(--amber); font-weight: 700; }
+
+.hero-genres { display: flex; flex-wrap: wrap; gap: 8px; }
+.hero-genres span {
+    padding: 4px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: rgba(13, 10, 9, 0.35);
+    color: var(--text-soft);
+    font-size: 12.5px;
+}
+
+.hero-desc {
+    max-width: 56ch;
+    color: var(--text-soft);
+    font-size: 15px;
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+}
+
+.hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+
+.hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 46px;
+    padding: 0 20px;
+    border: 1px solid transparent;
+    border-radius: var(--r-sm);
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform var(--ease), box-shadow var(--ease), background var(--ease), border-color var(--ease), filter var(--ease);
+}
+.hero-btn svg { width: 18px; height: 18px; }
+.hero-btn-primary { background: var(--accent-gradient); color: var(--accent-ink); }
+.hero-btn-primary:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: 0 12px 28px -10px rgba(242, 94, 56, 0.75); }
+.hero-btn-ghost { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.18); color: #fff; }
+.hero-btn-ghost:hover { background: rgba(255, 255, 255, 0.14); border-color: var(--accent-line); transform: translateY(-2px); }
+.hero-save.is-saved { border-color: var(--accent-line); color: var(--accent-soft); }
+
+.hero-poster {
+    position: absolute;
+    right: var(--page-pad);
+    bottom: 60px;
+    z-index: 2;
+    width: clamp(170px, 17vw, 240px);
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border-radius: var(--r-md);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    transform: rotate(2deg);
+}
+.hero-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.hero-ui {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 22px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    padding: 0 var(--page-pad);
+    pointer-events: none;
+}
+.hero-ui > * { pointer-events: auto; }
+.hero-dots { display: flex; align-items: center; gap: 8px; }
+.hero-dot {
+    position: relative;
+    width: 9px;
+    height: 9px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+.hero-dot::after { content: ""; position: absolute; inset: -10px -4px; }   /* bigger touch area */
+.hero-dot.is-active { width: 26px; background: var(--accent); }
+.hero-nav {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: rgba(13, 10, 9, 0.55);
+    color: #fff;
+    cursor: pointer;
+    transition: background var(--ease), border-color var(--ease);
+}
+.hero-nav:hover { background: rgba(13, 10, 9, 0.85); border-color: var(--accent-line); }
+.hero-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.hero.is-loading .hero-track {
+    background: linear-gradient(90deg, var(--surface-1) 0%, var(--surface-2) 50%, var(--surface-1) 100%);
+    background-size: 1200px 100%;
+    animation: shimmer 1.6s linear infinite;
+}
+.hero.is-fallback {
+    height: clamp(300px, 44vh, 420px);
+    background: radial-gradient(900px 400px at 15% 100%, rgba(242, 94, 56, 0.22), transparent 70%), var(--surface-1);
+}
+.hero.is-fallback .hero-shade { background: linear-gradient(0deg, var(--bg) 0%, rgba(13, 10, 9, 0) 55%); }
+
+/* ---------- HOME: sections ---------- */
+.home-section { margin: 0 0 42px; color: #fff; }
+.home-section .row-header h2 { font-family: "Alata", sans-serif; font-size: 1.45rem; font-weight: 400; color: #fff; }
+.eyebrow { margin-bottom: 2px; color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.collection-timer {
+    align-self: flex-end;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+
+.continue-sec.is-guest .row-header { display: none; }
+.connect-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px 24px;
+    border: 1px solid rgba(246, 124, 59, 0.28);
+    border-radius: var(--r-md);
+    background: linear-gradient(135deg, rgba(242, 94, 56, 0.12), rgba(254, 150, 61, 0.04)), var(--surface-1);
+}
+.connect-banner strong { font-family: "Alata", sans-serif; font-size: 1.1rem; font-weight: 400; color: #fff; }
+.connect-banner p { max-width: 62ch; margin: 3px 0 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.connect-banner .continue-cta { flex: none; }
+.row-scroller > .connect-banner,
+.row-scroller > .continue-empty,
+.row-scroller > .row-empty { flex: 1 0 100%; }
+.continue-empty a { color: var(--accent-soft); }
+
+/* ---------- SEARCH PAGE: results ---------- */
+#searchView .result-sec { margin-top: 34px; scroll-margin-top: 90px; }
+.results-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.results-head .sec-sub { margin-bottom: 0; }
+.results-status:empty { display: none; }
+.results-status { padding: 24px 0 6px; color: var(--muted); font-size: 14px; text-align: center; }
+.loading-more::after {
+    content: "";
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-left: 10px;
+    border: 2px solid var(--border-strong);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    vertical-align: -2px;
+    animation: spin 0.8s linear infinite;
+}
+.results-sentinel { height: 1px; }
+.results-end { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 34px 10px 6px; color: var(--muted); font-size: 14px; text-align: center; }
+.results-retry { margin-left: 10px; padding: 6px 14px; border: 1px solid var(--accent-line); border-radius: var(--r-sm); background: transparent; color: var(--accent-soft); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.results-retry:hover { background: var(--accent-tint); }
+
+/* ---------- footer ---------- */
+.site-footer {
+    margin-left: var(--sidebar-w);
+    padding: 28px var(--page-pad) 44px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.65;
+}
+.site-footer p { max-width: 90ch; }
+.site-footer strong { color: var(--text-soft); }
+.site-footer a { color: var(--accent-soft); }
+
+/* the tilted poster only has room on wide screens */
+@media (max-width: 1000px) {
+    .hero-poster { display: none; }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 760px) {
+    .hero { height: min(76vh, 540px); margin-bottom: 28px; }
+    .hero-content { gap: 10px; padding-bottom: 70px; }
+    .hero-title { font-size: 1.9rem; }
+    .hero-meta { font-size: 13px; gap: 10px; }
+    .hero-desc { font-size: 14px; -webkit-line-clamp: 2; line-clamp: 2; }
+    .hero-actions { flex-wrap: nowrap; gap: 8px; }
+    .hero-actions .hero-btn { height: 44px; padding: 0 14px; font-size: 14px; }
+    .hero-actions .hero-btn-primary { flex: 1 1 auto; justify-content: center; }
+    .hero-nav {
+        position: absolute;
+        bottom: 10px;
+        display: grid;
+    }
+    .hero-prev { right: calc(var(--page-pad) + 48px); }
+    .hero-next { right: var(--page-pad); }
+    .hero-ui { inset: 0; padding: 0; }
+    .hero-dots { position: absolute; left: var(--page-pad); bottom: 26px; }
+    .hero-shade {
+        background:
+            linear-gradient(90deg, rgba(13, 10, 9, 0.85) 0%, rgba(13, 10, 9, 0.45) 70%, rgba(13, 10, 9, 0.25) 100%),
+            linear-gradient(0deg, var(--bg) 0%, rgba(13, 10, 9, 0) 55%);
+        z-index: 1;
+    }
+    .hero-bg { display: none; }
+    .hero-poster {
+        display: block;
+        inset: 0;
+        z-index: 0;
+        width: auto;
+        aspect-ratio: auto;
+        border-radius: 0;
+        box-shadow: none;
+        transform: none;
+    }
+
+    .home-section { margin-bottom: 34px; }
+    .connect-banner { flex-direction: column; align-items: flex-start; gap: 14px; padding: 18px; }
+    .collection-timer { display: none; }
+    .results-head { align-items: flex-start; flex-direction: column; gap: 12px; }
+    .results-head .results-action-btn { align-self: stretch; }
+
+    .site-footer { margin-left: 0; padding: 26px var(--page-pad) calc(100px + env(safe-area-inset-bottom, 0px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-slide, .hero-bg { transition: none !important; }
+    .hero.is-loading .hero-track, .loading-more::after { animation: none; }
+}
+
+
+
+/* =========================================================
+   MOBILE CARDS: one compact card size everywhere  [ADDED]
+   Phones only (max-width 760px), so desktop is untouched. This block is at the very end of the last
+   stylesheet on purpose: when two rules have the same weight, the later one wins, so it overrides
+   the earlier card rules without editing them.
+
+   The result:
+   - Search page: a grid of 2 columns (3 on bigger phones / small tablets), compact upright cards.
+   - Home + Discover rows: cards with exactly the same width and look as the search cards.
+   - Continue Watching: NOT touched, it keeps its own (wider) card.
+
+   A card shows: poster, score, title (2 lines), meta line (year, format, episodes),
+   one row of genre chips, and the "matches your taste" reason when there is one.
+   The synopsis, status badge and Trailer button are not on the card (they are in the details window).
+   Save (+) and Favourite (heart) are small round buttons on the bottom-right corner of the poster.
+========================================================= */
+@media (max-width: 760px) {
+
+    /* ---------- 1. The shared card size ----------
+       A CSS variable is a named value you define once and reuse with var(--name).
+       --m-cols  = how many cards fit across the screen
+       --m-gap   = the space between cards
+       --m-card-w = the width of one card: the screen width, minus the page padding on both sides,
+                    minus the gaps between cards, divided by the number of columns.
+       The search grid and the Home/Discover rows both use it, so their cards come out the same size. */
+    :root {
+        --m-cols: 2;
+        --m-gap: 12px;
+        --m-card-w: calc((100vw - 2 * var(--page-pad) - (var(--m-cols) - 1) * var(--m-gap)) / var(--m-cols));
+    }
+
+    /* ---------- 2. The search page grid ----------
+       repeat(N, minmax(0, 1fr)) = N equal columns that are allowed to shrink (minmax(0, ...) stops
+       long titles from stretching a column). */
+    .anime-results {
+        grid-template-columns: repeat(var(--m-cols), minmax(0, 1fr));
+        gap: var(--m-gap);
+    }
+
+    /* ---------- 3. Row cards get the same width ----------
+       flex: 0 0 X = do not grow, do not shrink, be exactly X wide (needed inside a sideways scroller).
+       #continueRow is excluded on purpose with :not(#continueRow). */
+    .row-scroller:not(#continueRow) .anime-card,
+    .row-scroller:not(#continueRow) .skeleton-card {
+        flex: 0 0 var(--m-card-w);
+        width: var(--m-card-w);
+    }
+
+    /* ---------- 3b. Sideways swiping ----------
+       overscroll-behavior-x: contain = when a row reaches its start or end, the swipe stops there instead of
+       "chaining" to the browser (for example the back-swipe gesture or a page bounce).
+       The rows already use the phone's own touch scrolling (flick and momentum), so a hard flick travels
+       several cards at once. */
+    .row-scroller {
+        overscroll-behavior-x: contain;
+    }
+
+    /* ---------- 4. Card shape: upright, with the info stacked under the poster ----------
+       The old search card was a wide "poster on the left, text on the right" grid. This puts it back to
+       an upright card (display: flex + column) so two fit side by side. */
+    .anime-results .anime-card,
+    .row-scroller:not(#continueRow) .anime-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .anime-results .skeleton-card {
+        display: block;
+        min-height: 0;
+    }
+
+    /* ---------- 5. Poster ----------
+       aspect-ratio 5 / 6 = the poster is 5 wide for every 6 tall. This is the single number that controls
+       how tall the cards are (4 / 5 = shorter, 2 / 3 = taller).
+       The mask fades the bottom of the poster into the card colour, as on desktop. */
+    .anime-results .card-poster,
+    .row-scroller:not(#continueRow) .card-poster,
+    .anime-results .skeleton-img,
+    .row-scroller:not(#continueRow) .skeleton-img {
+        aspect-ratio: 5 / 6;
+        height: auto;
+        min-height: 0;
+    }
+
+    .anime-results .card-poster img,
+    .row-scroller:not(#continueRow) .card-poster img {
+        -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+        mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+        object-position: center 20%;
+    }
+
+    /* ---------- 6. Badges ----------
+       The status badge (Airing / Finished) is hidden. The score badge moves to the top-left and gets smaller. */
+    .anime-results .status-badge,
+    .row-scroller:not(#continueRow) .status-badge {
+        display: none;
+    }
+
+    .anime-results .score-badge,
+    .row-scroller:not(#continueRow) .score-badge {
+        top: 8px;
+        left: 8px;
+        right: auto;
+        bottom: auto;
+        padding: 2px 7px;
+        font-size: 11.5px;
+    }
+
+    /* ---------- 7. Text under the poster ---------- */
+    .anime-results .anime-info,
+    .row-scroller:not(#continueRow) .anime-info {
+        margin-top: -20px;          /* the title sits on the faded bottom of the poster, as on desktop */
+        padding: 0 10px 10px;
+        gap: 0;
+    }
+
+    /* Title: up to two lines, then "...".
+       margin-top: auto is the trick that bottom-aligns the text. Cards in the same row are stretched to the same
+       height, and .anime-info (the text area) is a column that fills the card. "auto" on the top margin means
+       "take all the spare space above me", so the title, meta line and chips are pushed down together.
+       A one-line title therefore leaves its empty line ABOVE it (on the faded bottom of the poster), and
+       the meta line and chips line up with the neighbouring card's. */
+    .anime-results .anime-info h3,
+    .row-scroller:not(#continueRow) .anime-info h3 {
+        margin: auto 0 3px;
+        font-size: 14px;
+        line-height: 1.25;
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+    }
+
+    /* Meta line (year • format • episodes): one line only */
+    .anime-results .card-meta,
+    .row-scroller:not(#continueRow) .card-meta {
+        margin: 0 0 6px;
+        font-size: 11.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Genre chips: one row, smaller. A chip that does not fit is hidden, never cut in half. */
+    .anime-results .card-genres,
+    .row-scroller:not(#continueRow) .card-genres {
+        height: 20px;
+        gap: 5px;
+        margin-bottom: 2px;
+    }
+
+    .anime-results .genre-chip,
+    .row-scroller:not(#continueRow) .genre-chip {
+        padding: 1px 8px;
+        font-size: 10.5px;
+    }
+
+    /* "Matches your taste for ..." line: kept on the search page only (never more than two lines).
+       Home and Discover rows hide it, because "Why this anime?" in the details window already shows it. */
+    .row-scroller:not(#continueRow) .anime-info .reason-text {
+        display: none;
+    }
+
+    .anime-results .anime-info .reason-text {
+        margin: 4px 0 0;
+        font-size: 11px;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+    }
+
+    /* Synopsis stays hidden (it already was on search results; now rows match) */
+    .row-scroller:not(#continueRow) .card-synopsis {
+        display: none;
+    }
+
+    /* ---------- 8. Buttons ----------
+       The Trailer pill is hidden. The Save and Favourite buttons are lifted onto the poster:
+       position: absolute takes them out of the normal flow, and the negative top moves them up,
+       because .anime-info starts 20px above the bottom of the poster. */
+    .anime-results .trailer-btn,
+    .row-scroller:not(#continueRow) .trailer-btn {
+        display: none;
+    }
+
+    .anime-results .card-icon-group,
+    .row-scroller:not(#continueRow) .card-icon-group {
+        position: absolute;
+        top: -36px;
+        right: 8px;
+        z-index: 3;
+        gap: 6px;
+    }
+
+    /* Round dark look, close to the score badge. There is deliberately NO blur (backdrop-filter) here:
+       every card has two of these buttons, and blurring dozens of them while a row is being swiped
+       can make scrolling stutter on mid-range phones. A slightly darker plain background costs nothing. */
+    .anime-results .card-icon-btn,
+    .row-scroller:not(#continueRow) .card-icon-btn {
+        width: 34px;
+        height: 34px;
+        background: rgba(14, 12, 10, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    /* The small remove (x) on saved cards goes to the top-right corner of the poster */
+    .anime-results .card-remove-btn,
+    .row-scroller:not(#continueRow) .card-remove-btn {
+        top: 8px;
+        right: 8px;
+    }
+
+    /* ---------- 9. Loading placeholders match the new card (no synopsis lines) ---------- */
+    .anime-results .skeleton-synopsis,
+    .row-scroller:not(#continueRow) .skeleton-synopsis {
+        display: none;
+    }
+}
+
+/* ---------- Bigger phones and small tablets (560px to 760px): 3 columns instead of 2 ---------- */
+@media (min-width: 560px) and (max-width: 760px) {
+    :root { --m-cols: 3; }
+}
+
+
+/* =========================================================
+   MOBILE TOP BAR: transparent at the top, glass when scrolled  [ADDED]
+   The page script (updateHeaderOnScroll in the router file) adds the class "is-scrolled" to the bar once the
+   page has scrolled more than 24px, and removes it again at the top. These rules only decide what each state
+   looks like, so no JavaScript changes are needed.
+   backdrop-filter blurs whatever is behind the bar, which is what makes it look like frosted glass.
+========================================================= */
+@media (max-width: 760px) {
+
+    .topbar-inner { grid-template-columns: 1fr auto; }
+    .logo { grid-column: 1; justify-self: start; }
+    .nav-profile-btn { grid-column: 2; }
+
+    /* At the top of the page: no colour, no blur, no line */
+    .topbar {
+        background-color: transparent;
+        border-bottom: 1px solid transparent;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        box-shadow: none;
+    }
+
+    /* Scrolled: see-through dark tint + strong blur + a faint line and shadow */
+    .topbar.is-scrolled {
+        background-color: rgba(17, 15, 13, 0.55);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        -webkit-backdrop-filter: blur(18px) saturate(160%);
+        backdrop-filter: blur(18px) saturate(160%);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+}
+
+
+/* =========================================================
+   CONTINUE WATCHING CARD: horizontal rectangle  [ADDED]
+   Only the cards inside #continueRow are touched, the other cards keep their upright shape.
+   The card is laid out as "poster on the left, info on the right" with a CSS grid.
+   Its size comes from two variables so that phone and desktop can each pick their own:
+   --cw-w = card width, --cw-h = card height (both are set in the two blocks further down).
+========================================================= */
+
+/* ---------- 1. The shape (all screen sizes) ----------
+   display: grid + grid-template-columns: 38% minmax(0, 1fr) = two columns: the poster takes 38% of the
+   card, the info takes the rest. minmax(0, 1fr) lets the text column shrink so long titles never push it wider.
+   flex: 0 0 X + width: X = exactly X wide inside the sideways scroller.
+   height: a fixed height is what makes every Continue card the same height. */
+#continueRow .anime-card,
+#continueRow .skeleton-card {
+    display: grid;
+    grid-template-columns: 38% minmax(0, 1fr);
+    flex: 0 0 var(--cw-w);
+    width: var(--cw-w);
+    height: var(--cw-h);
+}
+
+/* ---------- 2. Poster: fills the whole left column ----------
+   aspect-ratio: auto + height: 100% = stop being square and simply fill the card height.
+   The mask now fades the poster to the RIGHT (into the info area) instead of downwards. */
+#continueRow .card-poster,
+#continueRow .skeleton-img {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 0;
+}
+
+#continueRow .card-poster img {
+    -webkit-mask-image: linear-gradient(to right, #000 72%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 72%, transparent 100%);
+    object-position: center;
+}
+
+/* The poster is narrow now, so the status badge (Airing / Finished) is hidden here.
+   The progress bar is the useful information on this card. The score badge stays at the top-left. */
+#continueRow .status-badge {
+    display: none;
+}
+
+#continueRow .score-badge {
+    top: 8px;
+    left: 8px;
+    right: auto;
+    padding: 2px 7px;
+    font-size: 11.5px;
+}
+
+/* ---------- 3. Info column ----------
+   margin-top: 0 cancels the "title sits on the poster" overlap used by the upright cards.
+   justify-content: center centres the whole block up and down, so extra height becomes even space
+   at the top and bottom instead of one big gap in the middle. */
+#continueRow .anime-info {
+    margin-top: 0;
+    padding: 12px 14px 12px 6px;
+    justify-content: center;
+}
+
+#continueRow .continue-progress {
+    margin: 2px 0 12px;
+}
+
+#continueRow .card-actions {
+    margin-top: 0;
+}
+
+/* Loading placeholder: keep it centred too */
+#continueRow .skeleton-info {
+    align-self: center;
+}
+
+/* ---------- 4. Desktop (761px and wider): shorter and wider than the other cards ----------
+   380px wide x 200px tall = a horizontal rectangle, while the other cards stay tall (224px wide). */
+@media (min-width: 761px) {
+    :root {
+        --cw-w: 380px;
+        --cw-h: 200px;
+    }
+}
+
+/* ---------- 5. Phones (760px and narrower): wider, but shorter than the other cards ----------
+   Width = 1.9 x one normal card (--m-card-w is the shared card width from the block above), which is wide
+   enough for the info and still leaves a little of the next card peeking in to show it scrolls.
+   Height = 0.9 x one normal card width + 60px, which makes it clearly shorter than a normal card (about 215px
+   on a typical phone, a normal card is about 275px). max(210px, ...) is a floor: on very narrow phones the
+   card never gets shorter than 210px, because the text inside needs about 200px to fit. To change the height,
+   edit the numbers in --cw-h. */
+@media (max-width: 760px) {
+    :root {
+        --cw-w: calc(var(--m-card-w) * 1.9);
+        --cw-h: max(210px, calc(var(--m-card-w) * 0.9 + 60px));
+    }
+
+    /* Title: up to two lines here, since the card is wide enough for the extra information */
+    #continueRow .anime-info h3 {
+        font-size: 15px;
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+    }
+}
+
+
+/* =========================================================
+   HOME: HERO BANNER BEHIND THE TOP BAR  [ADDED]
+   The banner now starts at the very top of the page and the logo + profile button sit on top of it.
+   Scrolling slides the banner up underneath the bar; once scrolled, the bar turns into frosted glass
+   (the "is-scrolled" class that your router script already adds after 24px of scrolling).
+   Only the Home page changes. The other pages keep their normal spacing.
+========================================================= */
+
+/* ---------- 1. The bar height, stored once ----------
+   --topbar-h = height of the top bar (its inner row + the 1px line under it).
+   Desktop: 68px + 1px = 69px.  Phones: 58px + 1px = 59px. */
+:root {
+    --topbar-h: 69px;
+}
+
+@media (max-width: 760px) {
+    :root {
+        --topbar-h: 59px;
+    }
+}
+
+/* ---------- 2. The bar always has a 1px line, just invisible at the top ----------
+   Before, the line only appeared after scrolling, which made the bar 1px taller and nudged the page by 1px.
+   A transparent line keeps the height the same in both states. */
+.topbar {
+    border-bottom: 1px solid transparent;
+}
+
+/* ---------- 3. Pull the Home page up under the bar ----------
+   The top bar is "sticky" (it stays at the top) but it still takes up room in the page flow.
+   A negative top margin on the Home page moves everything up by exactly that room, so the banner
+   starts at the top of the screen and the bar floats over it (the bar has z-index 900, so it paints on top). */
+#homeView {
+    margin-top: calc(var(--topbar-h) * -1);
+}
+
+/* ---------- 4. Make the banner taller by the same amount ----------
+   Otherwise the visible banner would get shorter by the bar height. The text inside is anchored to the
+   bottom of the banner, so it stays exactly where it was. */
+.hero {
+    height: calc(clamp(430px, 64vh, 640px) + var(--topbar-h));
+}
+
+@media (max-width: 760px) {
+    .hero {
+        height: calc(min(66vh, 480px) + var(--topbar-h));
+    }
+}
+
+/* ---------- 5. A soft dark fade at the top of the banner ----------
+   Keeps the logo and profile button readable on bright artwork.
+   ::before makes an extra invisible layer on the banner (no HTML needed).
+   z-index 3 puts it above the banner pictures (1) but below the dots and arrows (5). */
+.hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--topbar-h) + 70px);
+    z-index: 3;
+    pointer-events: none;      /* clicks pass straight through it */
+    background: linear-gradient(180deg, rgba(13, 10, 9, 0.72) 0%, rgba(13, 10, 9, 0) 100%);
+}
+
+/* ---------- 6. Desktop: the same glass look as on phones when scrolled ----------
+   (the phone version is in the "MOBILE TOP BAR" block above). The see-through tint lets the banner
+   show through, blurred, while it slides under the bar. */
+@media (min-width: 761px) {
+    .topbar.is-scrolled {
+        background-color: rgba(17, 15, 13, 0.55);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        -webkit-backdrop-filter: blur(18px) saturate(160%);
+        backdrop-filter: blur(18px) saturate(160%);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+}
+
+
+/* =========================================================
+   TOP BAR: bring back the "light line, then glass" transition  [ADDED]
+   How the original worked: the moment you scrolled, a thin light line appeared under the bar INSTANTLY
+   (the line did not animate), while the dark glass tint faded in over 0.25 seconds. For a split second you
+   saw the light line on its own, then the glass settled in.
+   My earlier top bar blocks broke this: they kept an invisible line at all times, and the old transition rule
+   then faded that line in smoothly, so the quick flash was gone.
+========================================================= */
+
+/* ---------- 1. Only the tint and the shadow fade ----------
+   "transition" lists which properties animate and how long they take. border-color is no longer in the list,
+   so the line switches on instantly again. */
+.topbar {
+    transition: background-color .25s ease, box-shadow 0.25s ease;
+}
+
+/* ---------- 2. The line uses the same light colour as the original ----------
+   --border is your theme's soft warm-white line colour. border-bottom-color changes only the colour of the
+   existing 1px line, so the bar's height stays the same and the page does not jump. */
+.topbar.is-scrolled {
+    border-bottom-color: var(--border);
 }
